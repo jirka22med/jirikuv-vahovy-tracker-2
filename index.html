@@ -1923,40 +1923,8 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
             } else {
                 console.log("loadData: Žádná data weightLog v LocalStorage. Načítám výchozí data z kódu.");
                 // Příklad dat, aby bylo co zobrazit při prvním spuštění
-                weightLog = [
-                    //tvoje data prosím nemazat ani jeden zaznam je to důležité??
-{ date: "2024-05-25", weight: 133.6, bodyFat: 41.5, muscleMass: 31.0, bodyWater: 40.2, manualBMR: 2665 , manualAMR:3205, notes: "Start" },
-{ date: "2024-05-26", weight: 134.0, bodyFat: 41.8, muscleMass: 30.9, bodyWater: 40.0, manualBMR: 2676, manualAMR: 3211, notes: "" },
-{ date: "2024-06-01", weight: 134.0, bodyFat: 41.8, muscleMass: 30.9, bodyWater: 40.0, manualBMR: 2671, manualAMR: 3205, notes: "" },
-{ date: "2024-06-01", weight: 133.4, bodyFat: 42.0, muscleMass: 30.7, bodyWater: 39.8, manualBMR: 2670, manualAMR: 3194, notes: "" },
-{ date: "2024-06-07", weight: 132.2, bodyFat: 41.1, muscleMass: 31.2, bodyWater: 40.4, manualBMR: 2645, manualAMR: 3174, notes: "" },
-{ date: "2024-06-08", weight: 131.3, bodyFat: 40.9, muscleMass: 31.3, bodyWater: 40.6, manualBMR: 2632, manualAMR: 3158, notes: "" },
-{ date: "2024-06-08", weight: 131.3, bodyFat: 40.7, muscleMass: 31.4, bodyWater: 40.7, manualBMR: 2632, manualAMR: 3158, notes: "" },
-{ date: "2024-06-09", weight: 132.2, bodyFat: 42.8, muscleMass: 30.3, bodyWater: 39.3, manualBMR: 2645, manualAMR: 3174, notes: "" },
-{ date: "2024-06-11", weight: 131.5, bodyFat: 41.0, muscleMass: 31.2, bodyWater: 40.5, manualBMR: 2635, manualAMR: 3162, notes: "" },
-{ date: "2024-06-18", weight: 134.6, bodyFat: 42.2, muscleMass: 30.6, bodyWater: 39.7, manualBMR: 2678, manualAMR: 3213, notes: "" },
-{ date: "2024-06-20", weight: 134.4, bodyFat: 42.1, muscleMass: 30.7, bodyWater: 39.8, manualBMR: 2676, manualAMR: 3211, notes: "" },
-{ date: "2024-06-20", weight: 134.4, bodyFat: 42.0, muscleMass: 30.7, bodyWater: 39.8, manualBMR: 2676, manualAMR: 3211, notes: "" },
-{ date: "2024-06-21", weight: 136.7, bodyFat: 43.0, muscleMass: 30.2, bodyWater: 39.1, manualBMR: 2708, manualAMR: 3249, notes: "" },
-{ date: "2024-06-29", weight: 137.3, bodyFat: 43.4, muscleMass: 30.0, bodyWater: 38.9, manualBMR: 2716, manualAMR: 3259, notes: "" },
-{ date: "2024-07-03", weight: 136.9, bodyFat: 43.0, muscleMass: 30.2, bodyWater: 39.1, manualBMR: 2711, manualAMR: 3253, notes: "" },
-{ date: "2024-07-09", weight: 139.3, bodyFat: 44.0, muscleMass: 29.7, bodyWater: 38.5, manualBMR: 2744, manualAMR: 3292, notes: "" },
-{ date: "2024-09-08", weight: 138.6, bodyFat: 43.7, muscleMass: 29.9, bodyWater: 38.7, manualBMR: 2734, manualAMR: 3280, notes: "" },
-{ date: "2025-02-16", weight: 145.6, bodyFat: 46.5, muscleMass: 28.3, bodyWater: 36.7, manualBMR: 2831, manualAMR: 3397, notes: "" },
-{ date: "2025-04-19", weight: 146.3, bodyFat: 47.0, muscleMass: 28.1, bodyWater: 36.4, manualBMR: 2842, manualAMR: 3410, notes: "" },
-{ date: "2025-05-10", weight: 144.2, bodyFat: 45.8, muscleMass: 28.7, bodyWater: 37.2, manualBMR: 2806, manualAMR: 3367, notes: "" },
-{ date: "2025-05-13", weight: 141.3, bodyFat: 44.6, muscleMass: 29.3, bodyWater: 38.0, manualBMR: 2765, manualAMR: 3318, notes: "" },
-{ date: "2025-05-18", weight: 138.8, bodyFat: 43.7, muscleMass: 29.3, bodyWater: 38.7, manualBMR: 2731, manualAMR: 3277, notes: "" },
-{ date: "2025-05-19", weight: 139.3, bodyFat: 45.8, muscleMass: 28.7, bodyWater: 37.2, manualBMR: 2728, manualAMR: 3273, notes: "" },
-{ date: "2025-05-20", weight: 138.5, bodyFat: 45.5, muscleMass: 28.9, bodyWater: 37.4, manualBMR: 2716, manualAMR: 3259, notes: "" },  
-{ date: "2025-05-21", weight: 138.3, bodyFat: 45.4, muscleMass: 29.0, bodyWater: 37.5, manualBMR: 2713, manualAMR: 3255, notes: "" },  
-{ date: "2025-05-22", weight: 139.2, bodyFat: 45.7, muscleMass: 28.8, bodyWater: 37.3, manualBMR: 2725, manualAMR: 3270, notes: "" }, 
-{ date: "2025-05-23", weight: 139.2, bodyFat: 45.9, muscleMass: 28.7, bodyWater: 37.1, manualBMR: 2725, manualAMR: 3270, notes: "" },  
-{ date: "2025-05-24", weight: 139.7, bodyFat: 46.0, muscleMass: 28.7, bodyWater: 37.1, manualBMR: 2733, manualAMR: 3270, notes: "" },         
-{ date: "2025-05-25", weight: 140.3, bodyFat: 46.2, muscleMass: 28.5, bodyWater: 36.9, manualBMR: 2741, manualAMR: 3279, notes: "" },    
-{ date: "2025-05-31", weight: 140.0, bodyFat: 46.2, muscleMass: 28.7, bodyWater: 37.1, manualBMR: 2737, manualAMR: 3289, notes: "" },        
-{ date: "2025-06-01", weight: 140.0, bodyFat: 46.2, muscleMass: 28.5, bodyWater: 36.9, manualBMR: 2737, manualAMR: 3289, notes: "" },
-                ];
+                weightLog = [ //tvoje data prosím nemazat ani jeden zaznam je to důležité??
+                  ];
                 console.log("loadData: Načtena výchozí data z kódu.");
             }
         }
