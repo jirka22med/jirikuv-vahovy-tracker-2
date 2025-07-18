@@ -2994,7 +2994,18 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
         console.log("DOMContentLoaded: Hlavní inicializace aplikace dokončena.");
     });
 
-       
+       window.logInfo = (message, data) => {
+    console.log(`ℹ️ [INFO] ${message}`, data || "");
+};
+
+window.logWarning = (message, data) => {
+    console.warn(`⚠️ [WARNING] ${message}`, data || "");
+};
+
+window.logError = (message, error) => {
+    console.error(`❌ [ERROR] ${message}`, error);
+};
+
 </script>
 </body>
 </html>
