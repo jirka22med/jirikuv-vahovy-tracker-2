@@ -51,8 +51,49 @@ function signOut() {
     });
 }
 
+// ✅ NOVÁ FUNKCE: Načte všechna data po přihlášení
+async function loadAllUserData() {
+  try {
+    console.log("📦 Začínám načítat uživatelská data...");
+    
+    // Načti všechna data paralelně
+    const [weightData, settings, goals] = await Promise.all([
+      loadWeightLogFromFirestore(),
+      loadSettingsFromFirestore(),
+      loadGoalsFromFirestore()
+    ]);
+    
+    console.log("✅ Váhová data načtena:", weightData);
+    console.log("⚙️ Nastavení načtena:", settings);
+    console.log("🎯 Cíle načteny:", goals);
+    
+    // Zavolej funkci pro zobrazení dat (pokud existuje)
+    if (typeof loadData === 'function') {
+      await loadData();
+    }
+    
+    // Nebo zavolej jednotlivé funkce pro aktualizaci UI
+    if (typeof updateWeightChart === 'function') {
+      updateWeightChart(weightData);
+    }
+    
+    if (typeof applySettings === 'function') {
+      applySettings(settings);
+    }
+    
+    if (typeof updateGoalsDisplay === 'function') {
+      updateGoalsDisplay(goals);
+    }
+    
+    console.log("🎉 Všechna data načtena a UI aktualizováno!");
+    
+  } catch (error) {
+    console.error("❌ Chyba při načítání uživatelských dat:", error);
+  }
+}
+
 // ✅ Sledujeme stav přihlášení a měníme UI + načítáme data
-firebase.auth().onAuthStateChanged(user => {
+firebase.auth().onAuthStateChanged(async (user) => {
   const loginSection = document.getElementById("login-section");
   const dashboardSection = document.getElementById("dashboard-section");
   const userNameSpan = document.getElementById("user-name");
@@ -76,17 +117,11 @@ firebase.auth().onAuthStateChanged(user => {
       userEmail.textContent = user.email;
     }
 
-    // ✅ Bezpečně načti váhová data po ověření přihlášení
-    if (typeof loadWeightLogFromFirestore === 'function') {
-      loadWeightLogFromFirestore()
-        .then(data => {
-          console.log("📦 Váhová data načtena:", data);
-          // TODO: volání funkce pro zobrazení těchto dat do UI
-        })
-        .catch(err => {
-          console.error("⚠️ Chyba při načítání váhových dat:", err);
-        });
-    }
+    // ✅ OPRAVA: Počkej chvíli a pak načti data
+    // Firebase potřebuje chvíli na dokončení inicializace
+    setTimeout(async () => {
+      await loadAllUserData();
+    }, 500);
 
   } else {
     console.log("🔴 Uživatel odhlášen.");
@@ -127,3 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
     console.warn("⚠️ logout-button není v DOM.");
   }
 });
+
+// ✅ Globální funkce pro refresh dat
+window.refreshUserData = loadAllUserData;
