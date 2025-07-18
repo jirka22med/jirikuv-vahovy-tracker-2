@@ -1534,19 +1534,27 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
       <div class="tab" onclick="showTab('settings')">Nastavení</div>
       <div class="tab" onclick="showTab('export')">Export/Import</div>
     </div>
-<!-- LOGIN PANEL -->
-<div id="loginPanel">
-  <input type="email" id="emailInput" placeholder="Email">
-  <input type="password" id="passwordInput" placeholder="Heslo">
-  <button onclick="signInWithEmail()">Přihlásit e-mailem</button>
-  <button onclick="signInWithGoogle()">Přihlásit přes Google</button>
+<!-- Login sekce -->
+<div id="login-section">
+  <h2>Přihlášení</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Heslo">
+  <button id="login-button">Přihlásit</button>
+   <button id="google-login-button">Přihlásit přes Google</button>
 </div>
 
-<!-- PANEL PRO PŘIHLÁŠENÉHO UŽIVATELE -->
-<div id="userPanel" style="display: none;">
-  Přihlášen jako: <span id="userEmail"></span><br>
-  <button onclick="signOut()">Odhlásit se</button>
+<!-- Warpový dashboard pro přihlášené -->
+<div id="dashboard-section" style="display: none;">
+  <h2>Vítej, <span id="user-name">veliteli</span>!</h2>
+  <button id="logout-button">Odhlásit</button>
 </div>
+
+  <!-- Sem dáme tvůj obsah pro uživatele -->
+  <div id="warp-data-container">
+    <!-- váhové záznamy, grafy, atd. -->
+  </div>
+</div>
+
 
     <div id="dashboard" class="tab-content active">
       <div class="stats">
