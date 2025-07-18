@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Pokročilý váhový tracker více admirála Jiříka</title>
- <!-- Firebase SDK – musí být PRVNÍ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
 
-<!-- Tvoje Firebase funkce -->
+<!-- Tvoje funkce (inicializace musí být zde) -->
 <script src="firebaseFunctions.js"></script>
+
+<!-- POSLEDNÍ – funkce co používají Firebase -->
 <script src="auth.js"></script>
-   <script src="service-worker.js"></script>
-<!-- Ostatní knihovny (můžou být klidně až za tím) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
 
 <!-- Manifest (PWA) -->
 <link rel="manifest" href="manifest.json">
@@ -1531,12 +1533,20 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
       <div class="tab" onclick="showTab('goals')">Cíle</div>
       <div class="tab" onclick="showTab('settings')">Nastavení</div>
       <div class="tab" onclick="showTab('export')">Export/Import</div>
-      <button onclick="signInWithGoogle()">Přihlásit se přes Google</button>
-<button onclick="signInWithEmail()">Přihlásit se e-mailem</button>
-  <input type="email" id="emailInput" placeholder="E-mail">
-<input type="password" id="passwordInput" placeholder="Heslo">
-
     </div>
+<!-- LOGIN PANEL -->
+<div id="loginPanel">
+  <input type="email" id="emailInput" placeholder="Email">
+  <input type="password" id="passwordInput" placeholder="Heslo">
+  <button onclick="signInWithEmail()">Přihlásit e-mailem</button>
+  <button onclick="signInWithGoogle()">Přihlásit přes Google</button>
+</div>
+
+<!-- PANEL PRO PŘIHLÁŠENÉHO UŽIVATELE -->
+<div id="userPanel" style="display: none;">
+  Přihlášen jako: <span id="userEmail"></span><br>
+  <button onclick="signOut()">Odhlásit se</button>
+</div>
 
     <div id="dashboard" class="tab-content active">
       <div class="stats">
@@ -2994,18 +3004,7 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
         console.log("DOMContentLoaded: Hlavní inicializace aplikace dokončena.");
     });
 
-       window.logInfo = (message, data) => {
-    console.log(`ℹ️ [INFO] ${message}`, data || "");
-};
-
-window.logWarning = (message, data) => {
-    console.warn(`⚠️ [WARNING] ${message}`, data || "");
-};
-
-window.logError = (message, error) => {
-    console.error(`❌ [ERROR] ${message}`, error);
-};
-
+       
 </script>
 </body>
 </html>
