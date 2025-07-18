@@ -1,6 +1,6 @@
 // === AUTH.JS: warp-ready přihlašovací modul ===
 
-// ⚠️ Zajistit inicializaci Firebase
+// ⚠️ Inicializace Firebase (pokud ještě není)
 if (typeof firebase === 'undefined' || !firebase.apps.length) {
   if (typeof initializeFirebaseApp === 'function') {
     initializeFirebaseApp();
@@ -23,14 +23,13 @@ function signInWithGoogle() {
 
 // ✅ Přihlášení přes e-mail/heslo
 function signInWithEmail() {
-  const emailInput = document.getElementById("emailInput");
-  const passwordInput = document.getElementById("passwordInput");
-  if (!emailInput || !passwordInput) {
-    console.warn("⚠️ Email nebo heslo input nebyl nalezen v DOM.");
+  const email = document.getElementById("emailInput")?.value;
+  const password = document.getElementById("passwordInput")?.value;
+
+  if (!email || !password) {
+    console.warn("⚠️ E-mail nebo heslo nebylo zadáno.");
     return;
   }
-  const email = emailInput.value;
-  const password = passwordInput.value;
 
   firebase.auth().signInWithEmailAndPassword(email, password)
     .then(userCredential => {
@@ -52,7 +51,7 @@ function signOut() {
     });
 }
 
-// ✅ Změna UI při změně stavu přihlášení
+// ✅ Sledujeme stav přihlášení a měníme UI + načítáme data
 firebase.auth().onAuthStateChanged(user => {
   const loginSection = document.getElementById("login-section");
   const dashboardSection = document.getElementById("dashboard-section");
@@ -64,43 +63,53 @@ firebase.auth().onAuthStateChanged(user => {
   if (user) {
     console.log("🟢 Přihlášen jako:", user.email);
 
-    if (loginSection) loginSection.style.display = "none";
-    if (dashboardSection) dashboardSection.style.display = "block";
-    if (userNameSpan) userNameSpan.textContent = user.displayName || user.email;
-
-    if (loginPanel) loginPanel.style.display = "none";
-    if (userPanel) userPanel.style.display = "block";
-    if (userEmail) userEmail.textContent = user.email;
-
-    // ✅ Načíst data až po přihlášení
-    if (typeof loadWeightLogFromFirestore === 'function') {
-      loadWeightLogFromFirestore();
+    // UI přepnutí
+    if (loginSection && dashboardSection && userNameSpan) {
+      loginSection.style.display = "none";
+      dashboardSection.style.display = "block";
+      userNameSpan.textContent = user.displayName || user.email;
     }
+
+    if (loginPanel && userPanel && userEmail) {
+      loginPanel.style.display = "none";
+      userPanel.style.display = "block";
+      userEmail.textContent = user.email;
+    }
+
+    // ✅ Bezpečně načti váhová data po ověření přihlášení
+    if (typeof loadWeightLogFromFirestore === 'function') {
+      loadWeightLogFromFirestore()
+        .then(data => {
+          console.log("📦 Váhová data načtena:", data);
+          // TODO: volání funkce pro zobrazení těchto dat do UI
+        })
+        .catch(err => {
+          console.error("⚠️ Chyba při načítání váhových dat:", err);
+        });
+    }
+
   } else {
     console.log("🔴 Uživatel odhlášen.");
 
-    if (loginSection) loginSection.style.display = "block";
-    if (dashboardSection) dashboardSection.style.display = "none";
-    if (userNameSpan) userNameSpan.textContent = "";
+    if (loginSection && dashboardSection && userNameSpan) {
+      loginSection.style.display = "block";
+      dashboardSection.style.display = "none";
+      userNameSpan.textContent = "";
+    }
 
-    if (loginPanel) loginPanel.style.display = "block";
-    if (userPanel) userPanel.style.display = "none";
-    if (userEmail) userEmail.textContent = "";
+    if (loginPanel && userPanel && userEmail) {
+      loginPanel.style.display = "block";
+      userPanel.style.display = "none";
+      userEmail.textContent = "";
+    }
   }
 });
 
-// ✅ Přidání listenerů po načtení DOM
-
+// ✅ Po načtení DOMu napojíme tlačítka
 document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("logout-button");
   const googleBtn = document.getElementById("google-login-button");
   const emailBtn = document.getElementById("login-button");
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", signOut);
-  } else {
-    console.warn("⚠️ logout-button není v DOM.");
-  }
+  const logoutBtn = document.getElementById("logout-button");
 
   if (googleBtn) {
     googleBtn.addEventListener("click", signInWithGoogle);
@@ -110,5 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (emailBtn) {
     emailBtn.addEventListener("click", signInWithEmail);
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", signOut);
+  } else {
+    console.warn("⚠️ logout-button není v DOM.");
   }
 });
