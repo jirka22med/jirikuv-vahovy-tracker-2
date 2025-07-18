@@ -23,8 +23,14 @@ function signInWithGoogle() {
 
 // ✅ Přihlášení přes e-mail/heslo
 function signInWithEmail() {
-  const email = document.getElementById("emailInput").value;
-  const password = document.getElementById("passwordInput").value;
+  const emailInput = document.getElementById("emailInput");
+  const passwordInput = document.getElementById("passwordInput");
+  if (!emailInput || !passwordInput) {
+    console.warn("⚠️ Email nebo heslo input nebyl nalezen v DOM.");
+    return;
+  }
+  const email = emailInput.value;
+  const password = passwordInput.value;
 
   firebase.auth().signInWithEmailAndPassword(email, password)
     .then(userCredential => {
@@ -58,50 +64,43 @@ firebase.auth().onAuthStateChanged(user => {
   if (user) {
     console.log("🟢 Přihlášen jako:", user.email);
 
-    // Správa hlavních UI panelů
-    if (loginSection && dashboardSection && userNameSpan) {
-      loginSection.style.display = "none";
-      dashboardSection.style.display = "block";
-      userNameSpan.textContent = user.displayName || user.email;
-    }
+    if (loginSection) loginSection.style.display = "none";
+    if (dashboardSection) dashboardSection.style.display = "block";
+    if (userNameSpan) userNameSpan.textContent = user.displayName || user.email;
 
-    // Správa alternativních UI panelů
-    if (loginPanel && userPanel && userEmail) {
-      loginPanel.style.display = "none";
-      userPanel.style.display = "block";
-      userEmail.textContent = user.email;
-    }
+    if (loginPanel) loginPanel.style.display = "none";
+    if (userPanel) userPanel.style.display = "block";
+    if (userEmail) userEmail.textContent = user.email;
 
+    // ✅ Načíst data až po přihlášení
+    if (typeof loadWeightLogFromFirestore === 'function') {
+      loadWeightLogFromFirestore();
+    }
   } else {
     console.log("🔴 Uživatel odhlášen.");
 
-    if (loginSection && dashboardSection && userNameSpan) {
-      loginSection.style.display = "block";
-      dashboardSection.style.display = "none";
-      userNameSpan.textContent = "";
-    }
+    if (loginSection) loginSection.style.display = "block";
+    if (dashboardSection) dashboardSection.style.display = "none";
+    if (userNameSpan) userNameSpan.textContent = "";
 
-    if (loginPanel && userPanel && userEmail) {
-      loginPanel.style.display = "block";
-      userPanel.style.display = "none";
-      userEmail.textContent = "";
-    }
+    if (loginPanel) loginPanel.style.display = "block";
+    if (userPanel) userPanel.style.display = "none";
+    if (userEmail) userEmail.textContent = "";
   }
 });
 
-// ✅ Odhlášení – inicializace po načtení DOM
+// ✅ Přidání listenerů po načtení DOM
+
 document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logout-button");
+  const googleBtn = document.getElementById("google-login-button");
+  const emailBtn = document.getElementById("login-button");
+
   if (logoutBtn) {
     logoutBtn.addEventListener("click", signOut);
   } else {
     console.warn("⚠️ logout-button není v DOM.");
   }
-});
-document.addEventListener("DOMContentLoaded", () => {
-  const googleBtn = document.getElementById("google-login-button");
-  const emailBtn = document.getElementById("login-button");
-  const logoutBtn = document.getElementById("logout-button");
 
   if (googleBtn) {
     googleBtn.addEventListener("click", signInWithGoogle);
@@ -111,9 +110,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (emailBtn) {
     emailBtn.addEventListener("click", signInWithEmail);
-  }
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", signOut);
   }
 });
