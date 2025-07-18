@@ -5,7 +5,7 @@ const urlsToCache = [
   "/style.css",
   "/app.js",
   "/manifest.json",
-  "/icons/icon-192.png",
+  "https://img40.rajce.idnes.cz/d4003/19/19517/19517492_984d6887838eae80a8eb677199393188/images/ChatGPTImage6.4.202519_47_20.jpg?ver=0",
   "/icons/icon-512.png"
 ];
 
