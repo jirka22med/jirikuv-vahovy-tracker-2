@@ -1,12 +1,13 @@
 // === firebaseFunctions.js: warp-ready Firestore funkce ===
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBCIHWbqCFJcCiuY-HFM3btTzUsByduluY",
-    authDomain: "moje-vaha-beta-2.firebaseapp.com",
-    projectId: "moje-vaha-beta-2",
-    storageBucket: "moje-vaha-beta-2.firebasestorage.app",
-    messagingSenderId: "870509063847",
-    appId: "1:870509063847:web:6e0f922a1b8637e2713582"
+  apiKey: "AIzaSyC2oBGhQO3-TcdG13WUir_Oim3ZIhwL4x0",
+  authDomain: "moje-vaha-uzivatele.firebaseapp.com",
+  projectId: "moje-vaha-uzivatele",
+  storageBucket: "moje-vaha-uzivatele.firebasestorage.app",
+  messagingSenderId: "1030233320580",
+  appId: "1:1030233320580:web:ccf66e626cdb80168666d1",
+ // measurementId: "G-SGD65ZZFBS"
 };
 
 console.log("📦 FirebaseConfig připraven pro projekt:", firebaseConfig.projectId);
@@ -170,3 +171,4 @@ window.waitForAuth = function() {
         });
     });
 };
+
