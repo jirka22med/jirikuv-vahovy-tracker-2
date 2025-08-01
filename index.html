@@ -1827,6 +1827,22 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
 
    
     <script>
+
+// Přepsání localStorage metod, aby byly nefunkční (nebo jen pasivní)
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: function () { return null; },
+    setItem: function () {},
+    removeItem: function () {},
+    clear: function () {},
+    key: function () { return null; },
+    length: 0
+  },
+  writable: false,
+  configurable: false
+});
+
+      
    // === KOMPLETNÍ HLAVNÍ SCRIPT - WARP-READY VERZE ===
 
 // Globální proměnné (deklarace zůstává nahoře)
@@ -3359,5 +3375,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
+
 
 
