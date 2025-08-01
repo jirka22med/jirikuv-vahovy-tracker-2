@@ -1,4 +1,4 @@
-// === AUTH.JS: warp-ready přihlašovací modul ===
+// === AUTH.JS: warp-ready přihlašovací modul - OPRAVENÁ VERZE ===
 
 // ⚠️ Inicializace Firebase (pokud ještě není)
 if (typeof firebase === 'undefined' || !firebase.apps.length) {
@@ -45,54 +45,47 @@ function signOut() {
   firebase.auth().signOut()
     .then(() => {
       console.log("👋 Uživatel byl odhlášen.");
+      // NOVÉ: Vyčisti UI při odhlášení
+      clearUserDataFromUI();
     })
     .catch(error => {
       console.error("❌ Chyba při odhlášení:", error);
     });
 }
 
-// ✅ NOVÁ FUNKCE: Načte všechna data po přihlášení
-async function loadAllUserData() {
+// 🆕 NOVÁ FUNKCE: Vyčisti UI data při odhlášení
+function clearUserDataFromUI() {
   try {
-    console.log("📦 Začínám načítat uživatelská data...");
-    
-    // Načti všechna data paralelně
-    const [weightData, settings, goals] = await Promise.all([
-      loadWeightLogFromFirestore(),
-      loadSettingsFromFirestore(),
-      loadGoalsFromFirestore()
-    ]);
-    
-    console.log("✅ Váhová data načtena:", weightData);
-    console.log("⚙️ Nastavení načtena:", settings);
-    console.log("🎯 Cíle načteny:", goals);
-    
-    // Zavolej funkci pro zobrazení dat (pokud existuje)
-    if (typeof loadData === 'function') {
-      await loadData();
+    // Vymaž grafy a data z UI
+    if (typeof clearWeightChart === 'function') {
+      clearWeightChart();
     }
     
-    // Nebo zavolej jednotlivé funkce pro aktualizaci UI
-    if (typeof updateWeightChart === 'function') {
-      updateWeightChart(weightData);
+    // Vymaž nastavení z UI
+    if (typeof clearSettingsFromUI === 'function') {
+      clearSettingsFromUI();
     }
     
-    if (typeof applySettings === 'function') {
-      applySettings(settings);
+    // Vymaž cíle z UI
+    if (typeof clearGoalsFromUI === 'function') {
+      clearGoalsFromUI();
     }
+
+    // Vymaž formuláře
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      if (form.reset && typeof form.reset === 'function') {
+        form.reset();
+      }
+    });
     
-    if (typeof updateGoalsDisplay === 'function') {
-      updateGoalsDisplay(goals);
-    }
-    
-    console.log("🎉 Všechna data načtena a UI aktualizováno!");
-    
+    console.log("🧹 UI vyčištěno po odhlášení");
   } catch (error) {
-    console.error("❌ Chyba při načítání uživatelských dat:", error);
+    console.error("❌ Chyba při čištění UI:", error);
   }
 }
 
-// ✅ Sledujeme stav přihlášení a měníme UI + načítáme data
+// ✅ KLÍČOVÁ OPRAVA: Sledujeme stav přihlášení s lepším timingem
 firebase.auth().onAuthStateChanged(async (user) => {
   const loginSection = document.getElementById("login-section");
   const dashboardSection = document.getElementById("dashboard-section");
@@ -102,7 +95,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
   const userEmail = document.getElementById("userEmail");
 
   if (user) {
-    console.log("🟢 Přihlášen jako:", user.email);
+    console.log(`🟢 Uživatel přihlášen: ${user.email} (UID: ${user.uid})`);
 
     // UI přepnutí
     if (loginSection && dashboardSection && userNameSpan) {
@@ -117,14 +110,45 @@ firebase.auth().onAuthStateChanged(async (user) => {
       userEmail.textContent = user.email;
     }
 
-    // ✅ OPRAVA: Počkej chvíli a pak načti data
-    // Firebase potřebuje chvíli na dokončení inicializace
-    setTimeout(async () => {
-      await loadAllUserData();
-    }, 500);
+    // ✅ ZJEDNODUŠENÉ ŘEŠENÍ: Použij pouze loadData() funkci
+    try {
+      // Počkej na Firebase inicializaci
+      if (typeof waitForAuth === 'function') {
+        await waitForAuth();
+        console.log("🔄 Firebase plně inicializován");
+      } else {
+        // Záložní čekání 1 sekunda
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Zavolej loadData() - ta už má veškerou logiku pro načítání a zobrazení
+      if (typeof loadData === 'function') {
+        console.log("📦 Volám loadData() pro načtení a zobrazení dat...");
+        await loadData(true); // forceReload = true pro jistotu
+        console.log("🎉 Data načtena a zobrazena!");
+      } else {
+        console.error("❌ Funkce loadData() není definována!");
+      }
+
+    } catch (error) {
+      console.error("❌ Chyba při načítání dat po přihlášení:", error);
+      // Zkus to znovu po 2 sekundách
+      setTimeout(async () => {
+        try {
+          if (typeof loadData === 'function') {
+            await loadData(true);
+          }
+        } catch (retryError) {
+          console.error("❌ Druhý pokus o načtení dat také selhal:", retryError);
+        }
+      }, 2000);
+    }
 
   } else {
     console.log("🔴 Uživatel odhlášen.");
+
+    // Vyčisti UI data před přepnutím
+    clearUserDataFromUI();
 
     if (loginSection && dashboardSection && userNameSpan) {
       loginSection.style.display = "block";
@@ -164,4 +188,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ✅ Globální funkce pro refresh dat
-window.refreshUserData = loadAllUserData;
+window.refreshUserData = async function() {
+  const user = firebase.auth().currentUser;
+  if (user) {
+    if (typeof loadData === 'function') {
+      await loadData(true); // forceReload = true
+    }
+  } else {
+    console.warn("⚠️ Nelze načíst data - uživatel není přihlášen");
+  }
+};
