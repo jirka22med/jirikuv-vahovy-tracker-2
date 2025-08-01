@@ -1973,7 +1973,7 @@ window.setTodayDate = function() {
     document.getElementById('entryDate').value = today;
 };
 
-// ✅ OPRAVENÁ FUNKCE: loadData - nyní s ochranou proti duplicitnímu volání
+// ✅ OPRAVENÁ FUNKCE: loadData - pouze z Firebase, bez localStorage
 window.loadData = async function(forceReload = false) {
     // 🛡️ Ochrana proti duplicitnímu načítání
     if (isDataLoading && !forceReload) {
@@ -1998,128 +1998,70 @@ window.loadData = async function(forceReload = false) {
     isDataLoading = true;
     
     console.log(`📦 loadData: Začínám načítat data pro uživatele: ${user.email} (UID: ${user.uid})`);
-    
-    //const savedWeightLog = localStorage.getItem('weightLog_JirikTracker_v2_charts_separated_musclePercent');
-    //const savedSettings = localStorage.getItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent');
-    //const savedGoals = localStorage.getItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent');
-
-    let firestoreWeightDataLoaded = false;
-    let firestoreSettingsDataLoaded = false;
-    let firestoreGoalsDataLoaded = false;
 
     try {
         console.log(`🔥 loadData: Načítám data z Firestore pro UID: ${user.uid}`);
+        
+        // Načítání váhových dat z Firestore
         const firestoreWeightData = await window.loadWeightLogFromFirestore();
         if (firestoreWeightData && firestoreWeightData.length > 0) {
             weightLog = firestoreWeightData;
-            firestoreWeightDataLoaded = true;
             console.log(`✅ loadData: ${firestoreWeightData.length} váhových záznamů načteno z Firestore pro ${user.email}`);
         } else {
-            console.log(`💭 loadData: Žádná váhová data v Firestore pro ${user.email}`);
+            console.log(`💭 loadData: Žádná váhová data v Firestore pro ${user.email}, používám prázdný seznam.`);
+            weightLog = [];
         }
 
+        // Načítání nastavení z Firestore
         const firestoreSettings = await window.loadSettingsFromFirestore();
         if (firestoreSettings) {
             settings = { ...settings, ...firestoreSettings };
-            firestoreSettingsDataLoaded = true;
             console.log(`⚙️ loadData: Nastavení načtena z Firestore pro ${user.email}`);
         } else {
-            console.log(`💭 loadData: Žádná nastavení v Firestore pro ${user.email}`);
+            console.log(`💭 loadData: Žádná nastavení v Firestore pro ${user.email}, používám výchozí.`);
         }
 
+        // Načítání cílů z Firestore
         const firestoreGoals = await window.loadGoalsFromFirestore();
         if (firestoreGoals) {
             goals = { ...goals, ...firestoreGoals };
-            firestoreGoalsDataLoaded = true;
             console.log(`🎯 loadData: Cíle načteny z Firestore pro ${user.email}`);
         } else {
-            console.log(`💭 loadData: Žádné cíle v Firestore pro ${user.email}`);
+            console.log(`💭 loadData: Žádné cíle v Firestore pro ${user.email}, používám výchozí.`);
         }
 
     } catch (error) {
         console.error(`❌ loadData: Chyba při načítání z Firestore pro ${user.email}:`, error);
-        window.showNotification("Chyba: Data z cloudu nebylo možné načíst. Pokouším se načíst lokální data.", 5000);
+        window.showNotification("Chyba: Data z cloudu nebylo možné načíst.", 5000);
+        
+        // V případě chyby nastavíme výchozí hodnoty
+        weightLog = [];
+        // settings a goals zůstanou s výchozími hodnotami
     }
 
-    // Fallback pro weightLog
-    if (!firestoreWeightDataLoaded) {
-        console.log("📁 loadData: Firestore weightLog nenačteno, pokouším se z LocalStorage.");
-        if (savedWeightLog) {
-            weightLog = JSON.parse(savedWeightLog);
-            console.log("📁 loadData: Data weightLog načtena z LocalStorage.");
-        } else {
-            console.log("🆕 loadData: Žádná data weightLog. Používám prázdný seznam.");
-            weightLog = [];
-        }
-    }
-
-    // Načítání settings a goals z LocalStorage, pokud nejsou z Firestore
-    if (!firestoreSettingsDataLoaded) {
-        console.log("📁 loadData: Firestore nastavení nenačteno, pokouším se z LocalStorage.");
-        if (savedSettings) {
-            settings = { ...settings, ...JSON.parse(savedSettings) };
-            console.log("📁 loadData: Nastavení načtena z LocalStorage.");
-        } else {
-            console.log("💭 loadData: Žádná nastavení v LocalStorage. Používám výchozí.");
-        }
-    } else {
-        console.log("✅ loadData: Nastavení již načtena z Firestore, přeskakuji LocalStorage.");
-    }
-    
-    if (!firestoreGoalsDataLoaded) {
-        console.log("📁 loadData: Firestore cíle nenačteny, pokouším se z LocalStorage.");
-        if (savedGoals) {
-            goals = { ...goals, ...JSON.parse(savedGoals) };
-            console.log("📁 loadData: Cíle načteny z LocalStorage.");
-        } else {
-            console.log("💭 loadData: Žádné cíle v LocalStorage. Používám výchozí.");
-        }
-    } else {
-        console.log("✅ loadData: Cíle již načteny z Firestore, přeskakuji LocalStorage.");
-    }
-
+    // Zajistíme správný formát activityLevel
     settings.activityLevel = parseFloat(settings.activityLevel) || 1.55;
+    
     console.log(`✅ loadData: Načítání dokončeno pro ${user.email}. Aktualizuji formuláře.`);
     window.updateForms();
-
-    // Prvotní uložení dat do Firebase, pokud byla načtena z LocalStorage nebo kódu
-    if (!firestoreWeightDataLoaded && (weightLog.length > 0 || savedWeightLog)) {
-        console.log("💾 loadData: Detekována chybějící data weightLog ve Firestore. Ukládám aktuální data do cloudu.");
-        await window.saveData();
-    } else if (!firestoreSettingsDataLoaded && savedSettings) {
-        console.log("💾 loadData: Detekována chybějící nastavení ve Firestore. Ukládám aktuální nastavení do cloudu.");
-        await window.saveData();
-    } else if (!firestoreGoalsDataLoaded && savedGoals) {
-        console.log("💾 loadData: Detekovány chybějící cíle ve Firestore. Ukládám aktuální cíle do cloudu.");
-        await window.saveData();
-    }
     
     isDataLoading = false;
     console.log(`🎉 loadData: Kompletní načítání dokončeno pro ${user.email}!`);
 };
 
-// ✅ OPRAVENÁ FUNKCE: saveData s ověřením uživatele
+// ✅ OPRAVENÁ FUNKCE: saveData - pouze do Firebase, bez localStorage
 window.saveData = async function() {
     const user = firebase.auth().currentUser;
     if (!user) {
         console.warn("⚠️ saveData: Uživatel není přihlášen, nelze uložit data do cloudu.");
-        // Aspoň ulož lokálně
-       // localStorage.setItem('weightLog_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(weightLog));
-        //localStorage.setItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(settings));
-        //localStorage.setItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(goals));
+        window.showNotification("Chyba: Nejste přihlášeni! Data nelze uložit.", 4000);
         return;
     }
     
     console.log(`💾 saveData: Ukládám data pro uživatele: ${user.email} (UID: ${user.uid})`);
-    
-    // Lokální uložení
-    //localStorage.setItem('weightLog_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(weightLog));
-    //localStorage.setItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(settings));
-    //localStorage.setItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(goals));
-    console.log("💾 saveData: Lokální uložení dokončeno.");
 
     try {
-        // Cloud uložení
+        // Ukládání pouze do Firebase/Firestore
         await window.saveWeightLogToFirestore(weightLog);
         console.log(`🔥 saveData: Váhová data uložena do Firestore pro ${user.email}`);
         
@@ -2129,11 +2071,12 @@ window.saveData = async function() {
         await window.saveGoalsToFirestore(goals);
         console.log(`🎯 saveData: Cíle uloženy do Firestore pro ${user.email}`);
 
+        console.log(`✅ saveData: Ukládání do cloudu dokončeno pro ${user.email}.`);
+
     } catch (error) {
         console.error(`❌ saveData: Chyba při ukládání do Firestore pro ${user.email}:`, error);
         window.showNotification("Chyba: Data se nepodařilo uložit do cloudu!", 4000);
     }
-    console.log(`✅ saveData: Ukládání dokončeno pro ${user.email}.`);
 };
 
 window.updateForms = function() {
@@ -3304,5 +3247,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
+
 
 
