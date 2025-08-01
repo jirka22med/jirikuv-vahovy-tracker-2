@@ -1973,7 +1973,7 @@ window.setTodayDate = function() {
     document.getElementById('entryDate').value = today;
 };
 
-// ✅ OPRAVENÁ FUNKCE: loadData - nyní s ochranou proti duplicitnímu volání
+// ✅ OPRAVENÁ FUNKCE: loadData - s opravou pořadí aktualizace UI
 window.loadData = async function(forceReload = false) {
     // 🛡️ Ochrana proti duplicitnímu načítání
     if (isDataLoading && !forceReload) {
@@ -1988,10 +1988,14 @@ window.loadData = async function(forceReload = false) {
         return;
     }
     
-    // 🛡️ Zkontroluj změnu uživatele
+    // 🛡️ Zkontroluj změnu uživatele (POUZE při skutečné změně, ne při prvním načtení)
     if (currentUserUID && currentUserUID !== user.uid) {
         console.log(`🔄 loadData: Detekována změna uživatele (${currentUserUID} → ${user.uid}), čistím UI.`);
         clearUserDataFromUI();
+    } else if (!currentUserUID) {
+        console.log(`🆕 loadData: První načtení pro uživatele: ${user.email} (UID: ${user.uid})`);
+    } else {
+        console.log(`🔄 loadData: Obnovuji data pro stejného uživatele: ${user.email} (UID: ${user.uid})`);
     }
     
     currentUserUID = user.uid;
@@ -2080,6 +2084,8 @@ window.loadData = async function(forceReload = false) {
 
     settings.activityLevel = parseFloat(settings.activityLevel) || 1.55;
     console.log(`✅ loadData: Načítání dokončeno pro ${user.email}. Aktualizuji formuláře.`);
+    
+    // 🔧 KRITICKÁ OPRAVA: Aktualizuj UI až PO načtení všech dat!
     window.updateForms();
 
     // Prvotní uložení dat do Firebase, pokud byla načtena z LocalStorage nebo kódu
@@ -2094,8 +2100,57 @@ window.loadData = async function(forceReload = false) {
         await window.saveData();
     }
     
+    // 🎯 DŮLEŽITÉ: Aktualizuj celé UI až na konci, když jsou všechna data načtena!
+    console.log("🎨 loadData: Aktualizuji kompletní UI s načtenými daty...");
+    window.updateDisplay();
+    
     isDataLoading = false;
     console.log(`🎉 loadData: Kompletní načítání dokončeno pro ${user.email}!`);
+    
+    // 📊 DIAGNOSTIKA: Zkontroluj stav dat
+    console.log(`📊 DIAGNOSTIKA po loadData: weightLog.length = ${weightLog.length}, settings.height = ${settings.height}`);
+    if (weightLog.length > 0) {
+        console.log(`📊 První záznam: ${weightLog[0].date} - ${weightLog[0].weight}kg`);
+        console.log(`📊 Poslední záznam: ${weightLog[weightLog.length-1].date} - ${weightLog[weightLog.length-1].weight}kg`);
+    }
+};
+
+// 🔧 DOPLŇKOVÁ FUNKCE: Explicitní refresh UI (pro debugování)
+window.forceRefreshUI = function() {
+    console.log("🔄 forceRefreshUI: Vynucená aktualizace UI...");
+    console.log(`📊 Current data state: weightLog.length = ${weightLog.length}`);
+    
+    if (weightLog.length > 0) {
+        console.log("📊 Mám data, aktualizuji UI...");
+        window.updateDisplay();
+        window.showNotification(`UI obnoveno! Zobrazeno ${weightLog.length} záznamů.`, 2000);
+    } else {
+        console.log("📊 Žádná data k zobrazení!");
+        window.showNotification("Žádná data k zobrazení! Zkuste načíst data znovu.", 3000);
+    }
+};
+
+// 🛠️ DIAGNOSTICKÁ FUNKCE: Pro debugging stavu dat
+window.diagnoseDataState = function() {
+    console.log("🔍 === DIAGNOSTIKA STAVU DAT ===");
+    console.log("weightLog:", weightLog);
+    console.log("weightLog.length:", weightLog.length);
+    console.log("settings:", settings);
+    console.log("goals:", goals);
+    console.log("currentUserUID:", currentUserUID);
+    console.log("isDataLoading:", isDataLoading);
+    console.log("Firebase user:", firebase.auth().currentUser?.email || "NONE");
+    
+    // Zkontroluj grafy
+    console.log("Chart instances:");
+    console.log("weightChart:", weightChart?.data?.labels?.length || "UNDEFINED");
+    console.log("bmiChart:", bmiChart?.data?.labels?.length || "UNDEFINED");
+    
+    // Zkontroluj DOM elementy
+    const tableBody = document.getElementById('tableBody');
+    console.log("tableBody rows:", tableBody?.children?.length || "ELEMENT NOT FOUND");
+    
+    console.log("🔍 === KONEC DIAGNOSTIKY ===");
 };
 
 // ✅ OPRAVENÁ FUNKCE: saveData s ověřením uživatele
@@ -3304,4 +3359,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
+
 
