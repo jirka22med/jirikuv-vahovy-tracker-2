@@ -2081,20 +2081,37 @@ window.saveData = async function() {
 
 window.updateForms = function() {
     console.log("updateForms: Aktualizuji hodnoty formulářových polí.");
-    document.getElementById('height').value = settings.height || '';
-    document.getElementById('age').value = settings.age || '';
-    document.getElementById('gender').value = settings.gender || 'male';
-    document.getElementById('activityLevel').value = settings.activityLevel || '1.55';
-    document.getElementById('bmiWarningUpper').value = settings.bmiWarningUpper || '';
-    document.getElementById('bmiDangerUpper').value = settings.bmiDangerUpper || '';
-    document.getElementById('bmiWarningLower').value = settings.bmiWarningLower || '';
-    document.getElementById('reminderEnabled').checked = settings.reminderEnabled === true;
-    document.getElementById('reminderInterval').value = settings.reminderInterval || 7;
-
-    document.getElementById('targetWeight').value = goals.targetWeight || '';
-    document.getElementById('targetBMI').value = goals.targetBMI || '';
-    document.getElementById('targetDate').value = goals.targetDate || '';
-    document.getElementById('weeklyGoal').value = goals.weeklyGoal || '';
+    
+    // 🛡️ Kontrola existence elementů před přístupem
+    const elements = [
+        { id: 'height', value: settings.height || '', type: 'value' },
+        { id: 'age', value: settings.age || '', type: 'value' },
+        { id: 'gender', value: settings.gender || 'male', type: 'value' },
+        { id: 'activityLevel', value: settings.activityLevel || '1.55', type: 'value' },
+        { id: 'bmiWarningUpper', value: settings.bmiWarningUpper || '', type: 'value' },
+        { id: 'bmiDangerUpper', value: settings.bmiDangerUpper || '', type: 'value' },
+        { id: 'bmiWarningLower', value: settings.bmiWarningLower || '', type: 'value' },
+        { id: 'reminderEnabled', value: settings.reminderEnabled === true, type: 'checked' },
+        { id: 'reminderInterval', value: settings.reminderInterval || 7, type: 'value' },
+        { id: 'targetWeight', value: goals.targetWeight || '', type: 'value' },
+        { id: 'targetBMI', value: goals.targetBMI || '', type: 'value' },
+        { id: 'targetDate', value: goals.targetDate || '', type: 'value' },
+        { id: 'weeklyGoal', value: goals.weeklyGoal || '', type: 'value' }
+    ];
+    
+    elements.forEach(({ id, value, type }) => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (type === 'checked') {
+                element.checked = value;
+            } else {
+                element.value = value;
+            }
+        } else {
+            console.warn(`⚠️ updateForms: Element '${id}' nenalezen v DOM!`);
+        }
+    });
+    
     console.log("updateForms: Formuláře aktualizovány.");
 };
 
@@ -2130,6 +2147,11 @@ window.checkBMIAlert = function(bmi) {
     console.log("checkBMIAlert: Kontroluji BMI pro upozornění.");
 
     const alertEl = document.getElementById('bmiAlert');
+    if (!alertEl) {
+        console.warn("⚠️ checkBMIAlert: Element 'bmiAlert' nenalezen!");
+        return;
+    }
+
     if (bmi === 0) {
         alertEl.className = 'alert';
         console.log("%ccheckBMIAlert: BMI je 0, upozornění skryto.", "color: #aaaaaa;");
@@ -2160,6 +2182,10 @@ window.checkBMIAlert = function(bmi) {
 window.showNotification = function(message, duration = 3000) {
     console.log(`showNotification: Zobrazuji notifikaci: "${message}"`);
     const notification = document.getElementById('notification');
+    if (!notification) {
+        console.warn("⚠️ showNotification: Element 'notification' nenalezen!");
+        return;
+    }
     notification.textContent = message;
     notification.style.display = 'block';
     setTimeout(() => {
@@ -2172,9 +2198,22 @@ window.showTab = function(tabName) {
     console.log(`showTab: Přepínám na záložku: ${tabName}`);
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
-    document.getElementById(tabName).classList.add('active');
-    console.log(`showTab: Záložka '${tabName}' aktivována.`);
+    
+    const tabButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+    const tabContent = document.getElementById(tabName);
+    
+    if (tabButton) {
+        tabButton.classList.add('active');
+    } else {
+        console.warn(`⚠️ showTab: Tlačítko pro záložku '${tabName}' nenalezeno!`);
+    }
+    
+    if (tabContent) {
+        tabContent.classList.add('active');
+        console.log(`showTab: Záložka '${tabName}' aktivována.`);
+    } else {
+        console.warn(`⚠️ showTab: Obsah záložky '${tabName}' nenalezen!`);
+    }
 };
 
 window.formatDateForDisplay = function(dateStr) {
@@ -2190,8 +2229,24 @@ window.formatDateForDisplay = function(dateStr) {
     return `${day}. ${month}. ${year}`;
 };
 
+// 🆕 Globální proměnné pro grafy
+window.weightChart = null;
+window.bmiChart = null;
+window.bodyFatOnlyChart = null;
+window.muscleMassOnlyChart = null;
+window.bodyWaterChart = null;
+window.manualBMRChart = null;
+window.manualAMRChart = null;
+
 window.initializeCharts = function() {
     console.log("initializeCharts: Spuštěna inicializace grafů.");
+    
+    // 🛡️ Kontrola, jestli Chart.js je dostupná
+    if (typeof Chart === 'undefined') {
+        console.error("❌ initializeCharts: Chart.js knihovna není načtena!");
+        return;
+    }
+    
     const commonOptions = (yLabel, xLabelColor = '#00d9ff', yLabelColor = '#00d9ff', gridColor = '#444', yPrecision = 1) => ({
         responsive: true, maintainAspectRatio: false,
         scales: {
@@ -2207,30 +2262,83 @@ window.initializeCharts = function() {
     });
 
     console.log("initializeCharts: Ničím existující instance grafů pro znovuinicializaci.");
-    if (weightChart) weightChart.destroy();
-    if (bmiChart) bmiChart.destroy();
-    if (bodyFatOnlyChart) bodyFatOnlyChart.destroy();
-    if (muscleMassOnlyChart) muscleMassOnlyChart.destroy();
-    if (bodyWaterChart) bodyWaterChart.destroy();
-    if (manualBMRChart) manualBMRChart.destroy();
-    if (manualAMRChart) manualAMRChart.destroy();
+    
+    // 🛡️ Bezpečné ničení existujících grafů
+    const chartsToDestroy = [
+        { name: 'weightChart', ref: window.weightChart },
+        { name: 'bmiChart', ref: window.bmiChart },
+        { name: 'bodyFatOnlyChart', ref: window.bodyFatOnlyChart },
+        { name: 'muscleMassOnlyChart', ref: window.muscleMassOnlyChart },
+        { name: 'bodyWaterChart', ref: window.bodyWaterChart },
+        { name: 'manualBMRChart', ref: window.manualBMRChart },
+        { name: 'manualAMRChart', ref: window.manualAMRChart }
+    ];
+    
+    chartsToDestroy.forEach(({ name, ref }) => {
+        if (ref && typeof ref.destroy === 'function') {
+            try {
+                ref.destroy();
+                console.log(`🗑️ initializeCharts: Graf ${name} zničen.`);
+            } catch (error) {
+                console.warn(`⚠️ initializeCharts: Chyba při ničení grafu ${name}:`, error);
+            }
+        }
+    });
 
-    weightChart = new Chart(document.getElementById('weightChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('Váha (kg)', [], '#00d9ff', 'rgba(0,217,255,0.2)')] }, options: commonOptions('Váha (kg)') });
-    bmiChart = new Chart(document.getElementById('bmiChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('BMI', [], '#55ff99', 'rgba(85,255,153,0.2)')] }, options: commonOptions('BMI') });
-    bodyWaterChart = new Chart(document.getElementById('bodyWaterChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('Voda v těle (%)', [], '#00aaff', 'rgba(0,170,255,0.2)')] }, options: commonOptions('Voda v těle (%)') });
-    manualBMRChart = new Chart(document.getElementById('manualBMRChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('Zadané BMR (kcal)', [], '#ff9933', 'rgba(255,153,51,0.2)')] }, options: commonOptions('BMR (kcal)', undefined, undefined, undefined, 0) });
-    manualAMRChart = new Chart(document.getElementById('manualAMRChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('Zadané AMR (kcal)', [], '#cc66ff', 'rgba(204,102,255,0.2)')] }, options: commonOptions('AMR (kcal)', undefined, undefined, undefined, 0) });
-    bodyFatOnlyChart = new Chart(document.getElementById('bodyFatOnlyChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('Tělesný tuk (%)', [], '#ff5555', 'rgba(255,85,85,0.2)')]}, options: commonOptions('Tuk (%)') });
-    muscleMassOnlyChart = new Chart(document.getElementById('muscleMassOnlyChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [lineChartDataset('Svalová hmota (%)', [], '#ffff55', 'rgba(255,255,85,0.2)')]}, options: commonOptions('Svaly (%)') });
-    console.log("initializeCharts: Grafy inicializovány.");
+    // 🛡️ Vytvoření nových grafů s kontrolou existence canvas elementů
+    const chartConfigs = [
+        { id: 'weightChart', variable: 'weightChart', label: 'Váha (kg)', color: '#00d9ff', bg: 'rgba(0,217,255,0.2)', yLabel: 'Váha (kg)' },
+        { id: 'bmiChart', variable: 'bmiChart', label: 'BMI', color: '#55ff99', bg: 'rgba(85,255,153,0.2)', yLabel: 'BMI' },
+        { id: 'bodyWaterChart', variable: 'bodyWaterChart', label: 'Voda v těle (%)', color: '#00aaff', bg: 'rgba(0,170,255,0.2)', yLabel: 'Voda v těle (%)' },
+        { id: 'manualBMRChart', variable: 'manualBMRChart', label: 'Zadané BMR (kcal)', color: '#ff9933', bg: 'rgba(255,153,51,0.2)', yLabel: 'BMR (kcal)', precision: 0 },
+        { id: 'manualAMRChart', variable: 'manualAMRChart', label: 'Zadané AMR (kcal)', color: '#cc66ff', bg: 'rgba(204,102,255,0.2)', yLabel: 'AMR (kcal)', precision: 0 },
+        { id: 'bodyFatOnlyChart', variable: 'bodyFatOnlyChart', label: 'Tělesný tuk (%)', color: '#ff5555', bg: 'rgba(255,85,85,0.2)', yLabel: 'Tuk (%)' },
+        { id: 'muscleMassOnlyChart', variable: 'muscleMassOnlyChart', label: 'Svalová hmota (%)', color: '#ffff55', bg: 'rgba(255,255,85,0.2)', yLabel: 'Svaly (%)' }
+    ];
+    
+    chartConfigs.forEach(({ id, variable, label, color, bg, yLabel, precision = 1 }) => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+            try {
+                window[variable] = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: [], datasets: [lineChartDataset(label, [], color, bg)] },
+                    options: commonOptions(yLabel, undefined, undefined, undefined, precision)
+                });
+                console.log(`✅ initializeCharts: Graf ${variable} vytvořen.`);
+            } catch (error) {
+                console.error(`❌ initializeCharts: Chyba při vytváření grafu ${variable}:`, error);
+            }
+        } else {
+            console.warn(`⚠️ initializeCharts: Canvas element '${id}' nenalezen!`);
+        }
+    });
+    
+    console.log("initializeCharts: Inicializace grafů dokončena.");
 };
 
 window.updateCharts = function() {
     console.log("updateCharts: Aktualizuji data v grafech.");
+    
     if (!weightLog || weightLog.length === 0) {
         console.log("updateCharts: Žádná data pro aktualizaci grafů.");
         return;
     }
+    
+    // 🛡️ Kontrola existence grafů
+    const charts = [
+        window.weightChart, window.bmiChart, window.bodyWaterChart,
+        window.manualBMRChart, window.manualAMRChart, 
+        window.bodyFatOnlyChart, window.muscleMassOnlyChart
+    ];
+    
+    const validCharts = charts.filter(chart => chart && typeof chart.update === 'function');
+    if (validCharts.length === 0) {
+        console.warn("⚠️ updateCharts: Žádné platné grafy k aktualizaci! Spouštím inicializaci...");
+        window.initializeCharts();
+        return;
+    }
+    
     const sortedData = [...weightLog].sort((a, b) => new Date(a.date) - new Date(b.date));
     const labels = sortedData.map(entry => window.formatDateForDisplay(entry.date));
     
@@ -2249,21 +2357,43 @@ window.updateCharts = function() {
     const manualBMRs = sortedData.map(entry => entry.manualBMR);
     const manualAMRs = sortedData.map(entry => entry.manualAMR);
 
-    weightChart.data.labels = labels; weightChart.data.datasets[0].data = weights; weightChart.update();
-    bmiChart.data.labels = labels; bmiChart.data.datasets[0].data = bmis; bmiChart.update();
-    bodyWaterChart.data.labels = labels; bodyWaterChart.data.datasets[0].data = bodyWaters.map(bw => bw === null || bw === undefined ? NaN : bw); bodyWaterChart.update();
-    manualBMRChart.data.labels = labels; manualBMRChart.data.datasets[0].data = manualBMRs.map(val => val === null || val === undefined ? NaN : val); manualBMRChart.update();
-    manualAMRChart.data.labels = labels; manualAMRChart.data.datasets[0].data = manualAMRs.map(val => val === null || val === undefined ? NaN : val); manualAMRChart.update();
-    bodyFatOnlyChart.data.labels = labels; bodyFatOnlyChart.data.datasets[0].data = bodyFats.map(bf => bf === null || bf === undefined ? NaN : bf); bodyFatOnlyChart.update();
-    muscleMassOnlyChart.data.labels = labels; muscleMassOnlyChart.data.datasets[0].data = muscleMassPercentages; muscleMassOnlyChart.update();
-    console.log("updateCharts: Grafy úspěšně aktualizovány.");
+    // 🛡️ Bezpečná aktualizace grafů
+    const updateChart = (chart, chartName, data) => {
+        if (chart && typeof chart.update === 'function') {
+            try {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = data;
+                chart.update();
+                console.log(`✅ updateCharts: Graf ${chartName} aktualizován.`);
+            } catch (error) {
+                console.error(`❌ updateCharts: Chyba při aktualizaci grafu ${chartName}:`, error);
+            }
+        }
+    };
+
+    updateChart(window.weightChart, 'weightChart', weights);
+    updateChart(window.bmiChart, 'bmiChart', bmis);
+    updateChart(window.bodyWaterChart, 'bodyWaterChart', bodyWaters.map(bw => bw === null || bw === undefined ? NaN : bw));
+    updateChart(window.manualBMRChart, 'manualBMRChart', manualBMRs.map(val => val === null || val === undefined ? NaN : val));
+    updateChart(window.manualAMRChart, 'manualAMRChart', manualAMRs.map(val => val === null || val === undefined ? NaN : val));
+    updateChart(window.bodyFatOnlyChart, 'bodyFatOnlyChart', bodyFats.map(bf => bf === null || bf === undefined ? NaN : bf));
+    updateChart(window.muscleMassOnlyChart, 'muscleMassOnlyChart', muscleMassPercentages);
+    
+    console.log("updateCharts: Aktualizace grafů dokončena.");
 };
 
 window.updateTable = function() {
     console.log("updateTable: Aktualizuji tabulku záznamů.");
+    
     const tableBody = document.getElementById('tableBody');
+    if (!tableBody) {
+        console.warn("⚠️ updateTable: Element 'tableBody' nenalezen!");
+        return;
+    }
+    
     tableBody.innerHTML = '';
-    if (!weightLog || settings.height <=0) {
+    
+    if (!weightLog || weightLog.length === 0 || !settings.height || settings.height <= 0) {
         console.log("updateTable: Žádná data nebo nastavení výšky pro zobrazení tabulky.");
         return;
     }
@@ -2318,21 +2448,52 @@ window.updateTable = function() {
 
 window.updateStats = function() {
     console.log("updateStats: Aktualizuji statistiky.");
-    if (weightLog.length === 0) {
+    
+    // 🛡️ Kontrola existence všech potřebných elementů
+    const statElements = [
+        'currentWeight', 'currentBMI', 'weightChange', 'currentBodyWater',
+        'lastManualBMR', 'lastManualAMR', 'theoreticalBMR', 'theoreticalAMR',
+        'goalProgress', 'goalProgressBarCard', 'latestEntryDate', 'goalStatus',
+        'goalEstimate', 'progressFill'
+    ];
+    
+    const missingElements = statElements.filter(id => !document.getElementById(id));
+    if (missingElements.length > 0) {
+        console.warn("⚠️ updateStats: Chybějící elementy:", missingElements);
+    }
+    
+    if (!weightLog || weightLog.length === 0) {
         console.log("updateStats: Žádná data pro zobrazení statistik.");
-        document.getElementById('currentWeight').textContent = '-';
-        document.getElementById('currentBMI').textContent = '-';
-        document.getElementById('currentBMI').className = 'stat-value';
-        document.getElementById('weightChange').textContent = '-';
-        document.getElementById('weightChange').className = 'stat-value';
-        document.getElementById('currentBodyWater').textContent = '-';
-        document.getElementById('lastManualBMR').textContent = '-';
-        document.getElementById('lastManualAMR').textContent = '-';
-        document.getElementById('theoreticalBMR').textContent = '-';
-        document.getElementById('theoreticalAMR').textContent = '-';
-        document.getElementById('goalProgress').textContent = '-';
-        document.getElementById('goalProgressBarCard').style.display = 'none';
-        document.getElementById('latestEntryDate').textContent = 'Žádná data k zobrazení.';
+        
+        // Bezpečné nastavení výchozích hodnot
+        const setElementText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        
+        const setElementClass = (id, className) => {
+            const el = document.getElementById(id);
+            if (el) el.className = className;
+        };
+        
+        const setElementStyle = (id, style, value) => {
+            const el = document.getElementById(id);
+            if (el) el.style[style] = value;
+        };
+        
+        setElementText('currentWeight', '-');
+        setElementText('currentBMI', '-');
+        setElementClass('currentBMI', 'stat-value');
+        setElementText('weightChange', '-');
+        setElementClass('weightChange', 'stat-value');
+        setElementText('currentBodyWater', '-');
+        setElementText('lastManualBMR', '-');
+        setElementText('lastManualAMR', '-');
+        setElementText('theoreticalBMR', '-');
+        setElementText('theoreticalAMR', '-');
+        setElementText('goalProgress', '-');
+        setElementStyle('goalProgressBarCard', 'display', 'none');
+        setElementText('latestEntryDate', 'Žádná data k zobrazení.');
         return;
     }
 
@@ -2343,12 +2504,25 @@ window.updateStats = function() {
     const currentBMI = window.calculateBMI(currentWeight, settings.height);
     const currentBodyWater = latestEntry.bodyWater;
 
-    document.getElementById('currentWeight').textContent = currentWeight.toFixed(1);
-    document.getElementById('currentBMI').textContent = currentBMI > 0 ? currentBMI.toFixed(1) : '-';
-    document.getElementById('currentBMI').className = 'stat-value ' + window.classifyBMI(currentBMI).class;
-    document.getElementById('currentBodyWater').textContent = currentBodyWater !== null && currentBodyWater !== undefined ? currentBodyWater.toFixed(1) : '-';
-    document.getElementById('lastManualBMR').textContent = latestEntry.manualBMR !== null && latestEntry.manualBMR !== undefined ? latestEntry.manualBMR : '-';
-    document.getElementById('lastManualAMR').textContent = latestEntry.manualAMR !== null && latestEntry.manualAMR !== undefined ? latestEntry.manualAMR : '-';
+    // Bezpečné aktualizace s kontrolou existence elementů
+    const updateElement = (id, content, property = 'textContent') => {
+        const el = document.getElementById(id);
+        if (el) {
+            el[property] = content;
+        }
+    };
+
+    updateElement('currentWeight', currentWeight.toFixed(1));
+    updateElement('currentBMI', currentBMI > 0 ? currentBMI.toFixed(1) : '-');
+    
+    const bmiEl = document.getElementById('currentBMI');
+    if (bmiEl) {
+        bmiEl.className = 'stat-value ' + window.classifyBMI(currentBMI).class;
+    }
+    
+    updateElement('currentBodyWater', currentBodyWater !== null && currentBodyWater !== undefined ? currentBodyWater.toFixed(1) : '-');
+    updateElement('lastManualBMR', latestEntry.manualBMR !== null && latestEntry.manualBMR !== undefined ? latestEntry.manualBMR : '-');
+    updateElement('lastManualAMR', latestEntry.manualAMR !== null && latestEntry.manualAMR !== undefined ? latestEntry.manualAMR : '-');
 
     let weightChangeVal = 0;
     let weightChangeText = '-';
@@ -2359,16 +2533,20 @@ window.updateStats = function() {
         weightChangeText = (weightChangeVal >= 0 ? '+' : '') + weightChangeVal.toFixed(1);
         changeClass = weightChangeVal > 0 ? 'gain' : (weightChangeVal < 0 ? 'loss' : '');
     }
-    document.getElementById('weightChange').textContent = weightChangeText;
-    document.getElementById('weightChange').className = 'stat-value ' + changeClass;
+    
+    updateElement('weightChange', weightChangeText);
+    const weightChangeEl = document.getElementById('weightChange');
+    if (weightChangeEl) {
+        weightChangeEl.className = 'stat-value ' + changeClass;
+    }
 
     const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
     const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
-    document.getElementById('theoreticalBMR').textContent = theoBMR > 0 ? Math.round(theoBMR) : '-';
-    document.getElementById('theoreticalAMR').textContent = theoAMR > 0 ? Math.round(theoAMR) : '-';
-    
-    document.getElementById('latestEntryDate').textContent = `Poslední záznam: ${window.formatDateForDisplay(latestEntry.date)}`;
+    updateElement('theoreticalBMR', theoBMR > 0 ? Math.round(theoBMR) : '-');
+    updateElement('theoreticalAMR', theoAMR > 0 ? Math.round(theoAMR) : '-');
+    updateElement('latestEntryDate', `Poslední záznam: ${window.formatDateForDisplay(latestEntry.date)}`);
 
+    // Pokrok k cíli
     if (goals.targetWeight && sortedLog.length > 0) {
         console.log("updateStats: Počítám pokrok k cíli.");
         const initialWeight = sortedLog[0].weight;
@@ -2390,17 +2568,26 @@ window.updateStats = function() {
         }
         progressPercent = Math.min(100, Math.max(0, progressPercent));
 
-        document.getElementById('goalProgress').textContent = `${progressPercent.toFixed(1)}%`;
-        document.getElementById('goalProgressBarCard').style.display = 'block';
-        document.getElementById('progressFill').style.width = `${progressPercent}%`;
+        updateElement('goalProgress', `${progressPercent.toFixed(1)}%`);
+        
+        const progressBarCard = document.getElementById('goalProgressBarCard');
+        if (progressBarCard) {
+            progressBarCard.style.display = 'block';
+        }
+        
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            progressFill.style.width = `${progressPercent}%`;
+        }
         
         const remainingKg = goals.targetWeight - currentWeight;
         if (progressPercent >= 100) {
-            window.document.getElementById('goalStatus').textContent = `🎉 Cíl ${goals.targetWeight} kg dosažen/překonán!`;
+            updateElement('goalStatus', `🎉 Cíl ${goals.targetWeight} kg dosažen/překonán!`);
         } else {
-            window.document.getElementById('goalStatus').textContent = `Zbývá: ${remainingKg.toFixed(1)} kg do cíle (${goals.targetWeight} kg)`;
+            updateElement('goalStatus', `Zbývá: ${remainingKg.toFixed(1)} kg do cíle (${goals.targetWeight} kg)`);
         }
 
+        // Odhad času do cíle
         const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
         const now = new Date();
         const recentLog = sortedLog.filter(entry => (now - new Date(entry.date)) <= THIRTY_DAYS_MS);
@@ -2427,28 +2614,40 @@ window.updateStats = function() {
             } else if (remainingKg !== 0) {
                 estimateText = 'Odhad: aktuálně se vzdalujete od cíle.';
             }
-            document.getElementById('goalEstimate').textContent = estimateText;
+            updateElement('goalEstimate', estimateText);
         } else if (remainingKg === 0) {
-            document.getElementById('goalEstimate').textContent = 'Cíl dosažen!';
+            updateElement('goalEstimate', 'Cíl dosažen!');
         } else {
-            document.getElementById('goalEstimate').textContent = 'Nedostatek dat za posl. 30 dní pro odhad.';
+            updateElement('goalEstimate', 'Nedostatek dat za posl. 30 dní pro odhad.');
         }
     } else {
-        document.getElementById('goalProgress').textContent = '-';
-        document.getElementById('goalProgressBarCard').style.display = 'none';
-        document.getElementById('goalEstimate').textContent = 'Cíl není nastaven.';
+        updateElement('goalProgress', '-');
+        const progressBarCard = document.getElementById('goalProgressBarCard');
+        if (progressBarCard) {
+            progressBarCard.style.display = 'none';
+        }
+        updateElement('goalEstimate', 'Cíl není nastaven.');
     }
+    
     window.checkBMIAlert(currentBMI);
     console.log("updateStats: Statistiky aktualizovány.");
 };
 
 window.updateRecommendations = function() {
     console.log("updateRecommendations: Aktualizuji doporučení.");
-    if (weightLog.length === 0 ) {
-        document.getElementById('recommendationText').innerHTML = '<p>Pro doporučení zadejte více dat.</p>';
+    
+    const recommendationEl = document.getElementById('recommendationText');
+    if (!recommendationEl) {
+        console.warn("⚠️ updateRecommendations: Element 'recommendationText' nenalezen!");
+        return;
+    }
+    
+    if (!weightLog || weightLog.length === 0) {
+        recommendationEl.innerHTML = '<p>Pro doporučení zadejte více dat.</p>';
         console.log("updateRecommendations: Žádná data pro generování doporučení.");
         return;
     }
+    
     const sortedDataDesc = [...weightLog].sort((a, b) => new Date(b.date) - new Date(a.date));
     const latestEntry = sortedDataDesc[0];
     const currentWeight = latestEntry.weight;
@@ -2457,11 +2656,16 @@ window.updateRecommendations = function() {
     let recommendations = [];
 
     if (currentBMI > 0) {
-        if (currentBMI < 18.5) recommendations.push("💚 Vaše BMI naznačuje podváhu. Zvažte konzultaci s lékařem o zdravém přírůstku váhy.");
-        else if (currentBMI > settings.bmiDangerUpper) recommendations.push("❤️ Vaše BMI je v pásmu obezity. Důrazně doporučujeme konzultaci s lékařem a úpravu životního stylu.");
-        else if (currentBMI > settings.bmiWarningUpper) recommendations.push("💛 Vaše BMI signalizuje nadváhu. Doporučujeme zaměřit se na vyváženou stravu a pravidelný pohyb.");
-        else recommendations.push("✅ Vaše BMI je v normálním rozmezí. Udržujte si zdravý životní styl!");
-    } else if(settings.height) {
+        if (currentBMI < 18.5) {
+            recommendations.push("💚 Vaše BMI naznačuje podváhu. Zvažte konzultaci s lékařem o zdravém přírůstku váhy.");
+        } else if (currentBMI > settings.bmiDangerUpper) {
+            recommendations.push("❤️ Vaše BMI je v pásmu obezity. Důrazně doporučujeme konzultaci s lékařem a úpravu životního stylu.");
+        } else if (currentBMI > settings.bmiWarningUpper) {
+            recommendations.push("💛 Vaše BMI signalizuje nadváhu. Doporučujeme zaměřit se na vyváženou stravu a pravidelný pohyb.");
+        } else {
+            recommendations.push("✅ Vaše BMI je v normálním rozmezí. Udržujte si zdravý životní styl!");
+        }
+    } else if (settings.height) {
         recommendations.push("⚠️ Zadejte výšku pro výpočet BMI a relevantní doporučení.");
     }
 
@@ -2481,7 +2685,7 @@ window.updateRecommendations = function() {
         } else if (weeklyTrend !== 0) {
             recommendations.push(`📈 Týdenní trend váhy: ${weeklyTrend.toFixed(1)} kg. Pokračujte ve svém úsilí!`);
         }
-    } else if (last7DaysEntries.length >=2) {
+    } else if (last7DaysEntries.length >= 2) {
         const sortedWeek = last7DaysEntries.sort((a,b) => new Date(a.date) - new Date(b.date));
         const weekChange = sortedWeek[sortedWeek.length-1].weight - sortedWeek[0].weight;
         if (Math.abs(weekChange) > 1.5) {
@@ -2502,13 +2706,16 @@ window.updateRecommendations = function() {
             }
         } else if (weightToChange === 0) {
             recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena! Gratulujeme!`);
-        } else if (daysToGoal <=0 && weightToChange !==0) {
+        } else if (daysToGoal <= 0 && weightToChange !== 0) {
             recommendations.push(`🗓️ Termín pro cíl ${goals.targetWeight} kg již vypršel. Zvažte nastavení nového cíle.`);
         }
     } else if (goals.targetWeight) {
         const weightToChange = goals.targetWeight - currentWeight;
-        if (weightToChange === 0) recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena!`);
-        else recommendations.push(`🎯 Cíl: ${goals.targetWeight} kg. Aktuálně zbývá ${weightToChange.toFixed(1)} kg.`);
+        if (weightToChange === 0) {
+            recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena!`);
+        } else {
+            recommendations.push(`🎯 Cíl: ${goals.targetWeight} kg. Aktuálně zbývá ${weightToChange.toFixed(1)} kg.`);
+        }
     }
 
     const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
@@ -2527,16 +2734,44 @@ window.updateRecommendations = function() {
     } else if (theoAMR > 0 && latestEntry.manualAMR) {
         recommendations.push(`💡 Váš poslední zadaný AMR je ${latestEntry.manualAMR} kcal. Teoreticky vypočtený AMR je ${Math.round(theoAMR)} kcal. Rozdíl může být dán specifickou aktivitou nebo metodikou měření.`);
     }
-    document.getElementById('recommendationText').innerHTML = recommendations.length > 0 ? recommendations.map(rec => `<p>${rec}</p>`).join('') : '<p>Žádná specifická doporučení. Udržujte zdravé návyky!</p>';
+    
+    recommendationEl.innerHTML = recommendations.length > 0 ? 
+        recommendations.map(rec => `<p>${rec}</p>`).join('') : 
+        '<p>Žádná specifická doporučení. Udržujte zdravé návyky!</p>';
     console.log("updateRecommendations: Doporučení aktualizována.");
 };
 
 window.updateDisplay = function() {
     console.log("updateDisplay: Spuštěna celková aktualizace zobrazení.");
-    window.updateTable();
-    window.updateCharts();
-    window.updateStats();
-    window.updateRecommendations();
+    
+    try {
+        window.updateTable();
+        console.log("✅ updateDisplay: Tabulka aktualizována.");
+    } catch (error) {
+        console.error("❌ updateDisplay: Chyba při aktualizaci tabulky:", error);
+    }
+    
+    try {
+        window.updateCharts();
+        console.log("✅ updateDisplay: Grafy aktualizovány.");
+    } catch (error) {
+        console.error("❌ updateDisplay: Chyba při aktualizaci grafů:", error);
+    }
+    
+    try {
+        window.updateStats();
+        console.log("✅ updateDisplay: Statistiky aktualizovány.");
+    } catch (error) {
+        console.error("❌ updateDisplay: Chyba při aktualizaci statistik:", error);
+    }
+    
+    try {
+        window.updateRecommendations();
+        console.log("✅ updateDisplay: Doporučení aktualizována.");
+    } catch (error) {
+        console.error("❌ updateDisplay: Chyba při aktualizaci doporučení:", error);
+    }
+    
     console.log("updateDisplay: Celkové zobrazení aktualizováno.");
 };
 
@@ -3100,11 +3335,7 @@ if (typeof window.clearAllData === 'undefined') {
             if (confirm('⚠️ JSTE SI ABSOLUTNĚ JISTI? Všechna data budou nenávratně ztracena!')) {
                 console.log("clearAllData: Uživatel potvrdil 2. fázi mazání. Mažu data.");
                 
-                // Smaž z localStorage
-                localStorage.removeItem('weightLog_JirikTracker_v2_charts_separated_musclePercent');
-                localStorage.removeItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent');
-                localStorage.removeItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent');
-                console.log("clearAllData: Lokální data smazána z LocalStorage.");
+               
                 
                 // Smaž z Firestore
                 try {
@@ -3247,6 +3478,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
-
 
 
