@@ -1539,9 +1539,10 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
 <!-- Login sekce -->
 <div id="login-section">
   <h2>Přihlášení</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Heslo">
-  <button id="login-button">Přihlásit</button>
+ <!-- <input type="email" id="email" placeholder="Email">-->
+ <!-- <input type="password" id="password" placeholder="Heslo">-->
+ <!-- <button id="login-button">Přihlásit</button>-->
+    <p> timto tlačítkem se příhlasíte přes svuj účet na Googlu a tím se i načtou vaše uložená data. </p>
    <button id="google-login-button">Přihlásit přes Google</button>
 </div>
 
@@ -2720,7 +2721,7 @@ console.log("🔧 Definuji export/import funkce explicitně do window objektu...
 
 // Export funkce
 if (typeof window.exportToCSV === 'undefined') {
-    console.error("❌ exportToCSV není definována v window! Definuji ji...");
+   // console.error("❌ exportToCSV není definována v window! Definuji ji...");
     window.exportToCSV = function() {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -2758,7 +2759,7 @@ if (typeof window.exportToCSV === 'undefined') {
 }
 
 if (typeof window.exportToPDF === 'undefined') {
-    console.error("❌ exportToPDF není definována v window! Definuji ji...");
+    //console.error("❌ exportToPDF není definována v window! Definuji ji...");
     window.exportToPDF = function() {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -2844,7 +2845,7 @@ if (typeof window.exportToPDF === 'undefined') {
 }
 
 if (typeof window.exportChartsAsPDF === 'undefined') {
-    console.error("❌ exportChartsAsPDF není definována v window! Definuji ji...");
+    //console.error("❌ exportChartsAsPDF není definována v window! Definuji ji...");
     window.exportChartsAsPDF = function() {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -2914,7 +2915,7 @@ if (typeof window.exportChartsAsPDF === 'undefined') {
 }
 
 if (typeof window.exportBackup === 'undefined') {
-    console.error("❌ exportBackup není definována v window! Definuji ji...");
+   // console.error("❌ exportBackup není definována v window! Definuji ji...");
     window.exportBackup = function() {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -2942,7 +2943,7 @@ if (typeof window.exportBackup === 'undefined') {
 
 // Import funkce
 if (typeof window.importFromCSV === 'undefined') {
-    console.error("❌ importFromCSV není definována v window! Definuji ji...");
+    //console.error("❌ importFromCSV není definována v window! Definuji ji...");
     window.importFromCSV = async function(inputElement) {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -3040,7 +3041,7 @@ if (typeof window.importFromCSV === 'undefined') {
 }
 
 if (typeof window.importFromBackup === 'undefined') {
-    console.error("❌ importFromBackup není definována v window! Definuji ji...");
+    //console.error("❌ importFromBackup není definována v window! Definuji ji...");
     window.importFromBackup = async function(inputElement) {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -3104,7 +3105,7 @@ if (typeof window.importFromBackup === 'undefined') {
 }
 
 if (typeof window.clearAllData === 'undefined') {
-    console.error("❌ clearAllData není definována v window! Definuji ji...");
+   // console.error("❌ clearAllData není definována v window! Definuji ji...");
     window.clearAllData = async function() {
         if (!window.ensureUserLoggedIn()) return;
         
@@ -3257,6 +3258,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
-
 
 
