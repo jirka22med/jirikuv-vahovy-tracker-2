@@ -1841,20 +1841,20 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
 let weightChart, bmiChart, bodyFatOnlyChart, muscleMassOnlyChart, bodyWaterChart, manualBMRChart, manualAMRChart;
 let weightLog = [];
 let settings = {
-    height: 174,
-    age: 24,
+    height: null,
+    age: null,
     gender: 'male',
-    activityLevel: 1.55,
-    bmiWarningUpper: 25,
-    bmiDangerUpper: 30,
-    bmiWarningLower: 18.5,
+    activityLevel: null,
+    bmiWarningUpper: null,
+    bmiDangerUpper: null,
+    bmiWarningLower: null,
     reminderEnabled: true,
-    reminderInterval: 7
+    reminderInterval: null
 };
 let goals = {
-    targetWeight: 80,
-    targetBMI: 24.9,
-    targetDate: '2026-05-18',
+    targetWeight: null,
+    targetBMI: null,
+    targetDate: null,
     weeklyGoal: null
 };
 
@@ -1879,22 +1879,22 @@ window.clearUserDataFromUI = function() {
 
     // Reset nastavení na výchozí
     settings = {
-        height: 174,
-        age: 24,
+        height: null,
+        age: null,
         gender: 'male',
-        activityLevel: 1.55,
-        bmiWarningUpper: 25,
-        bmiDangerUpper: 30,
-        bmiWarningLower: 18.5,
+        activityLevel: null,
+        bmiWarningUpper: null,
+        bmiDangerUpper: null,
+        bmiWarningLower: null,
         reminderEnabled: true,
-        reminderInterval: 7
+        reminderInterval: null
     };
 
     // Reset cílů na výchozí
     goals = {
-        targetWeight: 80,
-        targetBMI: 24.9,
-        targetDate: '2026-05-18',
+        targetWeight: null,
+        targetBMI: null,
+        targetDate: null,
         weeklyGoal: null
     };
 
@@ -3264,5 +3264,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
+
 
 
