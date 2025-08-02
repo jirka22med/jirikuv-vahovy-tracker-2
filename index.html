@@ -1841,8 +1841,8 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
 let weightChart, bmiChart, bodyFatOnlyChart, muscleMassOnlyChart, bodyWaterChart, manualBMRChart, manualAMRChart;
 let weightLog = [];
 let settings = {
-    height: 174,
-    age: 24,
+    height: null,
+    age: null,
     gender: 'male',
     activityLevel: 1.55,
     bmiWarningUpper: 25,
@@ -1852,9 +1852,9 @@ let settings = {
     reminderInterval: 7
 };
 let goals = {
-    targetWeight: 80,
-    targetBMI: 24.9,
-    targetDate: '2026-05-18',
+    targetWeight: null,
+    targetBMI: null,
+    targetDate: null,
     weeklyGoal: null
 };
 
@@ -1879,8 +1879,8 @@ window.clearUserDataFromUI = function() {
 
     // Reset nastavení na výchozí
     settings = {
-        height: 174,
-        age: 24,
+        height: null,
+        age: null,
         gender: 'male',
         activityLevel: 1.55,
         bmiWarningUpper: 25,
@@ -1892,9 +1892,9 @@ window.clearUserDataFromUI = function() {
 
     // Reset cílů na výchozí
     goals = {
-        targetWeight: 80,
-        targetBMI: 24.9,
-        targetDate: '2026-05-18',
+        targetWeight: null,
+        targetBMI: null,
+        targetDate: null,
         weeklyGoal: null
     };
 
@@ -3274,5 +3274,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
+
 
 
