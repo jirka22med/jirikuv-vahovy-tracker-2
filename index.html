@@ -1683,7 +1683,7 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
             <input type="number" id="entryBodyFat" step="0.1" min="0" max="100">
           </div>
           <div class="form-group">
-            <label for="entryMuscleMass">Svalová hmota (kg):</label>
+            <label for="entryMuscleMass">Svalová hmota (%):</label>
             <input type="number" id="entryMuscleMass" step="0.1" min="0">
           </div>
           <div class="form-group">
@@ -1841,20 +1841,20 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
 let weightChart, bmiChart, bodyFatOnlyChart, muscleMassOnlyChart, bodyWaterChart, manualBMRChart, manualAMRChart;
 let weightLog = [];
 let settings = {
-    height: null,
-    age: null,
+    height: 174,
+    age: 24,
     gender: 'male',
-    activityLevel: null,
-    bmiWarningUpper: null,
-    bmiDangerUpper: null,
-    bmiWarningLower: null,
+    activityLevel: 1.55,
+    bmiWarningUpper: 25,
+    bmiDangerUpper: 30,
+    bmiWarningLower: 18.5,
     reminderEnabled: true,
-    reminderInterval: null
+    reminderInterval: 7
 };
 let goals = {
-    targetWeight: null,
-    targetBMI: null,
-    targetDate: null,
+    targetWeight: 80,
+    targetBMI: 24.9,
+    targetDate: '2026-05-18',
     weeklyGoal: null
 };
 
@@ -1879,22 +1879,22 @@ window.clearUserDataFromUI = function() {
 
     // Reset nastavení na výchozí
     settings = {
-        height: null,
-        age: null,
+        height: 174,
+        age: 24,
         gender: 'male',
-        activityLevel: null,
-        bmiWarningUpper: null,
-        bmiDangerUpper: null,
-        bmiWarningLower: null,
+        activityLevel: 1.55,
+        bmiWarningUpper: 25,
+        bmiDangerUpper: 30,
+        bmiWarningLower: 18.5,
         reminderEnabled: true,
-        reminderInterval: null
+        reminderInterval: 7
     };
 
     // Reset cílů na výchozí
     goals = {
-        targetWeight: null,
-        targetBMI: null,
-        targetDate: null,
+        targetWeight: 80,
+        targetBMI: 24.9,
+        targetDate: '2026-05-18',
         weeklyGoal: null
     };
 
@@ -2371,184 +2371,194 @@ window.updateStats = function() {
     document.getElementById('lastManualAMR').textContent = latestEntry.manualAMR !== null && latestEntry.manualAMR !== undefined ? latestEntry.manualAMR : '-';
 
     let weightChangeVal = 0;
-    let weightChangeText = '-';
-    let changeClass = '';
-    if (sortedLog.length >= 2) {
-        const previousEntry = sortedLog[sortedLog.length - 2];
-        weightChangeVal = currentWeight - previousEntry.weight;
-        weightChangeText = (weightChangeVal >= 0 ? '+' : '') + weightChangeVal.toFixed(1);
-        changeClass = weightChangeVal > 0 ? 'gain' : (weightChangeVal < 0 ? 'loss' : '');
-    }
-    document.getElementById('weightChange').textContent = weightChangeText;
-    document.getElementById('weightChange').className = 'stat-value ' + changeClass;
+let weightChangeText = '-';
+let changeClass = '';
+if (sortedLog.length >= 2) {
+    const previousEntry = sortedLog[sortedLog.length - 2];
+    weightChangeVal = currentWeight - previousEntry.weight;
+    weightChangeText = (weightChangeVal >= 0 ? '+' : '') + weightChangeVal.toFixed(1);
+    changeClass = weightChangeVal > 0 ? 'gain' : (weightChangeVal < 0 ? 'loss' : '');
+}
+document.getElementById('weightChange').textContent = weightChangeText;
+document.getElementById('weightChange').className = 'stat-value ' + changeClass;
 
-    const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
-    const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
-    document.getElementById('theoreticalBMR').textContent = theoBMR > 0 ? Math.round(theoBMR) : '-';
-    document.getElementById('theoreticalAMR').textContent = theoAMR > 0 ? Math.round(theoAMR) : '-';
+const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
+const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
+document.getElementById('theoreticalBMR').textContent = theoBMR > 0 ? Math.round(theoBMR) : '-';
+document.getElementById('theoreticalAMR').textContent = theoAMR > 0 ? Math.round(theoAMR) : '-';
 
-    document.getElementById('latestEntryDate').textContent = `Poslední záznam: ${window.formatDateForDisplay(latestEntry.date)}`;
+document.getElementById('latestEntryDate').textContent = `Poslední záznam: ${window.formatDateForDisplay(latestEntry.date)}`;
 
-    if (goals.targetWeight && sortedLog.length > 0) {
-        console.log("updateStats: Počítám pokrok k cíli.");
-        const initialWeight = sortedLog[0].weight;
-        const totalChangeNeeded = goals.targetWeight - initialWeight;
-        const currentChangeAchieved = currentWeight - initialWeight;
-        let progressPercent = 0;
+if (goals.targetWeight && sortedLog.length > 0) {
+    console.log("updateStats: Počítám pokrok k cíli.");
+    const initialWeight = sortedLog[0].weight;
+    const totalChangeNeeded = goals.targetWeight - initialWeight;
+    const currentChangeAchieved = currentWeight - initialWeight;
+    let progressPercent = 0;
 
-        if (totalChangeNeeded !== 0) {
-            if ((totalChangeNeeded < 0 && currentWeight <= initialWeight && currentWeight >= goals.targetWeight) ||
-                (totalChangeNeeded > 0 && currentWeight >= initialWeight && currentWeight <= goals.targetWeight)) {
-                progressPercent = (Math.abs(currentChangeAchieved) / Math.abs(totalChangeNeeded)) * 100;
-            } else if ((totalChangeNeeded < 0 && currentWeight < goals.targetWeight) || (totalChangeNeeded > 0 && currentWeight > goals.targetWeight)) {
-                progressPercent = 100;
-            } else {
-                progressPercent = 0;
-            }
+    if (totalChangeNeeded !== 0) {
+        if ((totalChangeNeeded < 0 && currentWeight <= initialWeight && currentWeight >= goals.targetWeight) ||
+            (totalChangeNeeded > 0 && currentWeight >= initialWeight && currentWeight <= goals.targetWeight)) {
+            progressPercent = (Math.abs(currentChangeAchieved) / Math.abs(totalChangeNeeded)) * 100;
+        } else if ((totalChangeNeeded < 0 && currentWeight < goals.targetWeight) || (totalChangeNeeded > 0 && currentWeight > goals.targetWeight)) {
+            progressPercent = 100;
         } else {
-            progressPercent = (initialWeight === currentWeight) ? 100 : 0;
-        }
-        progressPercent = Math.min(100, Math.max(0, progressPercent));
-
-        document.getElementById('goalProgress').textContent = `${progressPercent.toFixed(1)}%`;
-        document.getElementById('goalProgressBarCard').style.display = 'block';
-        document.getElementById('progressFill').style.width = `${progressPercent}%`;
-
-        const remainingKg = goals.targetWeight - currentWeight;
-        if (progressPercent >= 100) {
-            window.document.getElementById('goalStatus').textContent = `🎉 Cíl ${goals.targetWeight} kg dosažen/překonán!`;
-        } else {
-            window.document.getElementById('goalStatus').textContent = `Zbývá: ${remainingKg.toFixed(1)} kg do cíle (${goals.targetWeight} kg)`;
-        }
-
-        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-        const now = new Date();
-        const recentLog = sortedLog.filter(entry => (now - new Date(entry.date)) <= THIRTY_DAYS_MS);
-
-        if (recentLog.length >= 2 && remainingKg !== 0) {
-            const oldestRecent = recentLog[0];
-            const latestRecent = recentLog[recentLog.length - 1];
-            const daysElapsed = Math.max(1, Math.floor((new Date(latestRecent.date) - new Date(oldestRecent.date)) / (1000 * 60 * 60 * 24)));
-            const weightChangeInPeriod = latestRecent.weight - oldestRecent.weight;
-            const dailyChange = weightChangeInPeriod / daysElapsed;
-            let estimateText = 'Nedostatek dat pro odhad.';
-
-            if (dailyChange !== 0 && ((remainingKg < 0 && dailyChange < 0) || (remainingKg > 0 && dailyChange > 0))) {
-                const estimatedDays = Math.abs(remainingKg / dailyChange);
-                if (estimatedDays > 365 * 3) {
-                    estimateText = 'Odhad: více než 3 roky';
-                } else if (estimatedDays > 365) {
-                    estimateText = `Odhad: cca ${Math.round(estimatedDays/30.44)} měsíců`;
-                } else {
-                    estimateText = `Odhad: cca ${Math.round(estimatedDays)} dní (~${Math.round(estimatedDays / 7)} týdnů)`;
-                }
-            } else if (dailyChange === 0 && remainingKg !== 0) {
-                estimateText = 'Odhad: stagnace, cíl se nepřibližuje.';
-            } else if (remainingKg !== 0) {
-                estimateText = 'Odhad: aktuálně se vzdalujete od cíle.';
-            }
-            document.getElementById('goalEstimate').textContent = estimateText;
-        } else if (remainingKg === 0) {
-            document.getElementById('goalEstimate').textContent = 'Cíl dosažen!';
-        } else {
-            document.getElementById('goalEstimate').textContent = 'Nedostatek dat za posl. 30 dní pro odhad.';
+            progressPercent = 0;
         }
     } else {
-        document.getElementById('goalProgress').textContent = '-';
-        document.getElementById('goalProgressBarCard').style.display = 'none';
-        document.getElementById('goalEstimate').textContent = 'Cíl není nastaven.';
+        progressPercent = (initialWeight === currentWeight) ? 100 : 0;
     }
-    window.checkBMIAlert(currentBMI);
-    console.log("updateStats: Statistiky aktualizovány.");
+    progressPercent = Math.min(100, Math.max(0, progressPercent));
+
+    document.getElementById('goalProgress').textContent = `${progressPercent.toFixed(1)}%`;
+    document.getElementById('goalProgressBarCard').style.display = 'block';
+    document.getElementById('progressFill').style.width = `${progressPercent}%`;
+
+    const remainingKg = goals.targetWeight - currentWeight;
+    if (progressPercent >= 100) {
+        window.document.getElementById('goalStatus').textContent = `🎉 Cíl ${goals.targetWeight} kg dosažen/překonán!`;
+    } else {
+        window.document.getElementById('goalStatus').textContent = `Zbývá: ${remainingKg.toFixed(1)} kg do cíle (${goals.targetWeight} kg)`;
+    }
+
+    // --- KALIBRACE ZAČÍNÁ ZDE ---
+    const TREND_PERIOD_DAYS = 30; // NASTAV SI TOTO ČÍSLO PRO KALIBRACI DÉLKY OBDOBÍ PRO ODHAD! (např. 7, 14, 60, 90)
+    const TREND_PERIOD_MS = TREND_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const recentLog = sortedLog.filter(entry => (now - new Date(entry.date)) <= TREND_PERIOD_MS);
+
+    if (recentLog.length >= 2 && remainingKg !== 0) {
+        const oldestRecent = recentLog[0];
+        const latestRecent = recentLog[recentLog.length - 1];
+        const daysElapsed = Math.max(1, Math.floor((new Date(latestRecent.date) - new Date(oldestRecent.date)) / (1000 * 60 * 60 * 24)));
+        const weightChangeInPeriod = latestRecent.weight - oldestRecent.weight;
+        const dailyChange = weightChangeInPeriod / daysElapsed;
+        let estimateText = 'Nedostatek dat pro odhad.';
+
+        if (dailyChange !== 0 && ((remainingKg < 0 && dailyChange < 0) || (remainingKg > 0 && dailyChange > 0))) {
+            const estimatedDays = Math.abs(remainingKg / dailyChange);
+            if (estimatedDays > 365 * 3) {
+                estimateText = 'Odhad: více než 3 roky (cílová čára v nedohlednu, ale držíš se!)';
+            } else if (estimatedDays > 365) {
+                const estimatedMonths = Math.round(estimatedDays / 30.44);
+                estimateText = `Odhad: cca ${estimatedMonths} měsíců`;
+            } else if (estimatedDays > 30) { // Nová kategorie pro odhad v měsících, pokud je to mezi 30 dny a rokem
+                const estimatedMonths = Math.round(estimatedDays / 30.44);
+                estimateText = `Odhad: cca ${estimatedMonths} měsíců (~${Math.round(estimatedDays)} dní)`;
+            } else if (estimatedDays > 7) {
+                const estimatedWeeks = Math.round(estimatedDays / 7);
+                estimateText = `Odhad: cca ${estimatedWeeks} týdnů (~${Math.round(estimatedDays)} dní)`;
+            } else {
+                estimateText = `Odhad: cca ${Math.round(estimatedDays)} dní`;
+            }
+        } else if (dailyChange === 0 && remainingKg !== 0) {
+            estimateText = 'Odhad: stagnace, cíl se nepřibližuje. Zkus posunout kormidlo!';
+        } else if (remainingKg !== 0) {
+            estimateText = 'Odhad: aktuálně se vzdalujete od cíle. Nezoufejte, kapitáne, kurz se dá vždy změnit!';
+        }
+        document.getElementById('goalEstimate').textContent = estimateText;
+    } else if (remainingKg === 0) {
+        document.getElementById('goalEstimate').textContent = 'Cíl dosažen!';
+    } else {
+        document.getElementById('goalEstimate').textContent = 'Nedostatek dat za posl. ' + TREND_PERIOD_DAYS + ' dní pro odhad.'; // Vylepšená zpráva
+    }
+    // --- KALIBRACE KONČÍ ZDE ---
+} else {
+    document.getElementById('goalProgress').textContent = '-';
+    document.getElementById('goalProgressBarCard').style.display = 'none';
+    document.getElementById('goalEstimate').textContent = 'Cíl není nastaven.';
+}
+window.checkBMIAlert(currentBMI);
+console.log("updateStats: Statistiky aktualizovány.");
 };
 
 window.updateRecommendations = function() {
-    console.log("updateRecommendations: Aktualizuji doporučení.");
-    if (weightLog.length === 0 ) {
-        document.getElementById('recommendationText').innerHTML = '<p>Pro doporučení zadejte více dat.</p>';
-        console.log("updateRecommendations: Žádná data pro generování doporučení.");
-        return;
+console.log("updateRecommendations: Aktualizuji doporučení.");
+if (weightLog.length === 0 ) {
+    document.getElementById('recommendationText').innerHTML = '<p>Pro doporučení zadejte více dat.</p>';
+    console.log("updateRecommendations: Žádná data pro generování doporučení.");
+    return;
+}
+const sortedDataDesc = [...weightLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+const latestEntry = sortedDataDesc[0];
+const currentWeight = latestEntry.weight;
+const currentBMI = window.calculateBMI(currentWeight, settings.height);
+
+let recommendations = [];
+
+if (currentBMI > 0) {
+    if (currentBMI < 18.5) recommendations.push("💚 Vaše BMI naznačuje podváhu. Zvažte konzultaci s lékařem o zdravém přírůstku váhy.");
+    else if (currentBMI > settings.bmiDangerUpper) recommendations.push("❤️ Vaše BMI je v pásmu obezity. Důrazně doporučujeme konzultaci s lékařem a úpravu životního stylu.");
+    else if (currentBMI > settings.bmiWarningUpper) recommendations.push("💛 Vaše BMI signalizuje nadváhu. Doporučujeme zaměřit se na vyváženou stravu a pravidelný pohyb.");
+    else recommendations.push("✅ Vaše BMI je v normálním rozmezí. Udržujte si zdravý životní styl!");
+} else if(settings.height) {
+    recommendations.push("⚠️ Zadejte výšku pro výpočet BMI a relevantní doporučení.");
+}
+
+const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7));
+const fourteenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 14));
+
+const last7DaysEntries = weightLog.filter(e => new Date(e.date) >= sevenDaysAgo);
+const prev7DaysEntries = weightLog.filter(e => new Date(e.date) >= fourteenDaysAgo && new Date(e.date) < sevenDaysAgo);
+
+if (last7DaysEntries.length > 1 && prev7DaysEntries.length > 1) {
+    const avgLast7 = last7DaysEntries.reduce((sum, e) => sum + e.weight, 0) / last7DaysEntries.length;
+    const avgPrev7 = prev7DaysEntries.reduce((sum, e) => sum + e.weight, 0) / prev7DaysEntries.length;
+    const weeklyTrend = avgLast7 - avgPrev7;
+
+    if (Math.abs(weeklyTrend) > 1.5) {
+        recommendations.push(`⚠️ Rychlá změna váhy (${weeklyTrend.toFixed(1)} kg/týden průměrně). Zvažte pozvolnější tempo (ideálně 0.5-1 kg/týden).`);
+    } else if (weeklyTrend !== 0) {
+        recommendations.push(`📈 Týdenní trend váhy: ${weeklyTrend.toFixed(1)} kg. Pokračujte ve svém úsilí!`);
     }
-    const sortedDataDesc = [...weightLog].sort((a, b) => new Date(b.date) - new Date(a.date));
-    const latestEntry = sortedDataDesc[0];
-    const currentWeight = latestEntry.weight;
-    const currentBMI = window.calculateBMI(currentWeight, settings.height);
-
-    let recommendations = [];
-
-    if (currentBMI > 0) {
-        if (currentBMI < 18.5) recommendations.push("💚 Vaše BMI naznačuje podváhu. Zvažte konzultaci s lékařem o zdravém přírůstku váhy.");
-        else if (currentBMI > settings.bmiDangerUpper) recommendations.push("❤️ Vaše BMI je v pásmu obezity. Důrazně doporučujeme konzultaci s lékařem a úpravu životního stylu.");
-        else if (currentBMI > settings.bmiWarningUpper) recommendations.push("💛 Vaše BMI signalizuje nadváhu. Doporučujeme zaměřit se na vyváženou stravu a pravidelný pohyb.");
-        else recommendations.push("✅ Vaše BMI je v normálním rozmezí. Udržujte si zdravý životní styl!");
-    } else if(settings.height) {
-        recommendations.push("⚠️ Zadejte výšku pro výpočet BMI a relevantní doporučení.");
+} else if (last7DaysEntries.length >=2) {
+    const sortedWeek = last7DaysEntries.sort((a,b) => new Date(a.date) - new Date(b.date));
+    const weekChange = sortedWeek[sortedWeek.length-1].weight - sortedWeek[0].weight;
+    if (Math.abs(weekChange) > 1.5) {
+        recommendations.push(`⚠️ Rychlá změna váhy za poslední dny: ${weekChange.toFixed(1)} kg. Doporučujeme pozvolnější změny.`);
     }
+}
 
-    const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7));
-    const fourteenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 14));
+if (goals.targetWeight && goals.targetDate) {
+    console.log("updateRecommendations: Počítám doporučení pro cíle.");
+    const daysToGoal = Math.ceil((new Date(goals.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
+    const weightToChange = goals.targetWeight - currentWeight;
 
-    const last7DaysEntries = weightLog.filter(e => new Date(e.date) >= sevenDaysAgo);
-    const prev7DaysEntries = weightLog.filter(e => new Date(e.date) >= fourteenDaysAgo && new Date(e.date) < sevenDaysAgo);
-
-    if (last7DaysEntries.length > 1 && prev7DaysEntries.length > 1) {
-        const avgLast7 = last7DaysEntries.reduce((sum, e) => sum + e.weight, 0) / last7DaysEntries.length;
-        const avgPrev7 = prev7DaysEntries.reduce((sum, e) => sum + e.weight, 0) / prev7DaysEntries.length;
-        const weeklyTrend = avgLast7 - avgPrev7;
-
-        if (Math.abs(weeklyTrend) > 1.5) {
-            recommendations.push(`⚠️ Rychlá změna váhy (${weeklyTrend.toFixed(1)} kg/týden průměrně). Zvažte pozvolnější tempo (ideálně 0.5-1 kg/týden).`);
-        } else if (weeklyTrend !== 0) {
-            recommendations.push(`📈 Týdenní trend váhy: ${weeklyTrend.toFixed(1)} kg. Pokračujte ve svém úsilí!`);
+    if (daysToGoal > 0 && weightToChange !== 0) {
+        const requiredWeeklyChange = (weightToChange / (daysToGoal / 7)).toFixed(1);
+        recommendations.push(`🎯 Pro dosažení cíle (${goals.targetWeight} kg) do ${window.formatDateForDisplay(goals.targetDate)}, je potřeba průměrná týdenní změna ${requiredWeeklyChange} kg.`);
+        if (Math.abs(requiredWeeklyChange) > 1.5) {
+            recommendations.push("💡 Tento týdenní cíl je poměrně ambiciózní. Ujistěte se, že je udržitelný a zdravý.");
         }
-    } else if (last7DaysEntries.length >=2) {
-        const sortedWeek = last7DaysEntries.sort((a,b) => new Date(a.date) - new Date(b.date));
-        const weekChange = sortedWeek[sortedWeek.length-1].weight - sortedWeek[0].weight;
-        if (Math.abs(weekChange) > 1.5) {
-            recommendations.push(`⚠️ Rychlá změna váhy za poslední dny: ${weekChange.toFixed(1)} kg. Doporučujeme pozvolnější změny.`);
-        }
+    } else if (weightToChange === 0) {
+        recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena! Gratulujeme!`);
+    } else if (daysToGoal <=0 && weightToChange !==0) {
+        recommendations.push(`🗓️ Termín pro cíl ${goals.targetWeight} kg již vypršel. Zvažte nastavení nového cíle.`);
     }
+} else if (goals.targetWeight) {
+    const weightToChange = goals.targetWeight - currentWeight;
+    if (weightToChange === 0) recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena!`);
+    else recommendations.push(`🎯 Cíl: ${weightToChange.toFixed(1)} kg. Aktuálně zbývá ${goals.targetWeight} kg.`);
+}
 
-    if (goals.targetWeight && goals.targetDate) {
-        console.log("updateRecommendations: Počítám doporučení pro cíle.");
-        const daysToGoal = Math.ceil((new Date(goals.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
-        const weightToChange = goals.targetWeight - currentWeight;
+const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
+const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
 
-        if (daysToGoal > 0 && weightToChange !== 0) {
-            const requiredWeeklyChange = (weightToChange / (daysToGoal / 7)).toFixed(1);
-            recommendations.push(`🎯 Pro dosažení cíle (${goals.targetWeight} kg) do ${window.formatDateForDisplay(goals.targetDate)}, je potřeba průměrná týdenní změna ${requiredWeeklyChange} kg.`);
-            if (Math.abs(requiredWeeklyChange) > 1.5) {
-                recommendations.push("💡 Tento týdenní cíl je poměrně ambiciózní. Ujistěte se, hogy je udržitelný a zdravý.");
-            }
-        } else if (weightToChange === 0) {
-            recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena! Gratulujeme!`);
-        } else if (daysToGoal <=0 && weightToChange !==0) {
-            recommendations.push(`🗓️ Termín pro cíl ${goals.targetWeight} kg již vypršel. Zvažte nastavení nového cíle.`);
-        }
-    } else if (goals.targetWeight) {
-        const weightToChange = goals.targetWeight - currentWeight;
-        if (weightToChange === 0) recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena!`);
-        else recommendations.push(`🎯 Cíl: ${goals.targetWeight} kg. Aktuálně zbývá ${weightToChange.toFixed(1)} kg.`);
+if (theoAMR > 0 && goals.weeklyGoal) {
+    const weeklyCalDeficitOrSurplus = goals.weeklyGoal * 7700;
+    const dailyCalAdjustment = weeklyCalDeficitOrSurplus / 7;
+    const targetCalories = Math.round(theoAMR + dailyCalAdjustment);
+    let goalType = goals.weeklyGoal < 0 ? "hubnutí" : (goals.weeklyGoal > 0 ? "nabírání" : "udržování");
+
+    recommendations.push(`🔥 Pro týdenní cíl ${goals.weeklyGoal} kg (${goalType}), váš odhadovaný denní příjem by mohl být okolo ${targetCalories} kcal (Teoretický AMR: ${Math.round(theoAMR)} kcal).`);
+    if (targetCalories < theoBMR && goals.weeklyGoal < 0) {
+        recommendations.push("❗ Váš cílový denní příjem je pod vaším teoretickým BMR. Dlouhodobě to nemusí být udržitelné. Zvažte mírnější cíl nebo konzultaci s odborníkem.");
     }
-
-    const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
-    const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
-
-    if (theoAMR > 0 && goals.weeklyGoal) {
-        const weeklyCalDeficitOrSurplus = goals.weeklyGoal * 7700;
-        const dailyCalAdjustment = weeklyCalDeficitOrSurplus / 7;
-        const targetCalories = Math.round(theoAMR + dailyCalAdjustment);
-        let goalType = goals.weeklyGoal < 0 ? "hubnutí" : (goals.weeklyGoal > 0 ? "nabírání" : "udržování");
-
-        recommendations.push(`🔥 Pro týdenní cíl ${goals.weeklyGoal} kg (${goalType}), váš odhadovaný denní příjem by mohl být okolo ${targetCalories} kcal (Teoretický AMR: ${Math.round(theoAMR)} kcal).`);
-        if (targetCalories < theoBMR && goals.weeklyGoal < 0) {
-            recommendations.push("❗ Váš cílový denní příjem je pod vaším teoretickým BMR. Dlouhodobě to nemusí být udržitelné. Zvažte mírnější cíl nebo konzultaci s odborníkem.");
-        }
-    } else if (theoAMR > 0 && latestEntry.manualAMR) {
-        recommendations.push(`💡 Váš poslední zadaný AMR je ${latestEntry.manualAMR} kcal. Teoreticky vypočtený AMR je ${Math.round(theoAMR)} kcal. Rozdíl může být dán specifickou aktivitou nebo metodikou měření.`);
-    }
-    document.getElementById('recommendationText').innerHTML = recommendations.length > 0 ? recommendations.map(rec => `<p>${rec}</p>`).join('') : '<p>Žádná specifická doporučení. Udržujte zdravé návyky!</p>';
-    console.log("updateRecommendations: Doporučení aktualizována.");
+} else if (theoAMR > 0 && latestEntry.manualAMR) {
+    recommendations.push(`💡 Váš poslední zadaný AMR je ${latestEntry.manualAMR} kcal. Teoreticky vypočtený AMR je ${Math.round(theoAMR)} kcal. Rozdíl může být dán specifickou aktivitou nebo metodikou měření.`);
+}
+document.getElementById('recommendationText').innerHTML = recommendations.length > 0 ? recommendations.map(rec => `<p>${rec}</p>`).join('') : '<p>Žádná specifická doporučení. Udržujte zdravé návyky!</p>';
+console.log("updateRecommendations: Doporučení aktualizována.");
 };
 
 // 🔥 VYLEPŠENÁ FUNKCE: updateDisplay s debug logem
@@ -3264,6 +3274,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
-
 
 
