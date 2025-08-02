@@ -1827,22 +1827,6 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
 
    
     <script>
-
-// Přepsání localStorage metod, aby byly nefunkční (nebo jen pasivní)
-Object.defineProperty(window, 'localStorage', {
-  value: {
-    getItem: function () { return null; },
-    setItem: function () {},
-    removeItem: function () {},
-    clear: function () {},
-    key: function () { return null; },
-    length: 0
-  },
-  writable: false,
-  configurable: false
-});
-
-      
    // === KOMPLETNÍ HLAVNÍ SCRIPT - WARP-READY VERZE ===
 
 // Globální proměnné (deklarace zůstává nahoře)
@@ -1878,13 +1862,13 @@ const ACTIVITY_LEVELS = {
     VERY_ACTIVE: 1.9
 };
 
-// 🛡️ NOVÁ FUNKCE: Čištění UI dat
+// 🛡️ OPRAVENÁ FUNKCE: Čištění UI dat - přesnější kontrola
 window.clearUserDataFromUI = function() {
     console.log("🧹 clearUserDataFromUI: Čistím UI data při změně uživatele.");
-    
+
     // Vymaž všechna data z paměti
     weightLog = [];
-    
+
     // Reset nastavení na výchozí
     settings = {
         height: 174,
@@ -1897,7 +1881,7 @@ window.clearUserDataFromUI = function() {
         reminderEnabled: true,
         reminderInterval: 7
     };
-    
+
     // Reset cílů na výchozí
     goals = {
         targetWeight: 80,
@@ -1905,71 +1889,80 @@ window.clearUserDataFromUI = function() {
         targetDate: '2026-05-18',
         weeklyGoal: null
     };
-    
-    // Vyčisti grafiky
-    if (weightChart) {
+
+    // Vyčisti grafiky POUZE pokud existují
+    if (typeof weightChart !== 'undefined' && weightChart) {
         weightChart.data.labels = [];
         weightChart.data.datasets[0].data = [];
         weightChart.update();
     }
-    
-    if (bmiChart) {
+
+    if (typeof bmiChart !== 'undefined' && bmiChart) {
         bmiChart.data.labels = [];
         bmiChart.data.datasets[0].data = [];
         bmiChart.update();
     }
-    
-    if (bodyFatOnlyChart) {
+
+    if (typeof bodyFatOnlyChart !== 'undefined' && bodyFatOnlyChart) {
         bodyFatOnlyChart.data.labels = [];
         bodyFatOnlyChart.data.datasets[0].data = [];
         bodyFatOnlyChart.update();
     }
-    
-    if (muscleMassOnlyChart) {
+
+    if (typeof muscleMassOnlyChart !== 'undefined' && muscleMassOnlyChart) {
         muscleMassOnlyChart.data.labels = [];
         muscleMassOnlyChart.data.datasets[0].data = [];
         muscleMassOnlyChart.update();
     }
-    
-    if (bodyWaterChart) {
+
+    if (typeof bodyWaterChart !== 'undefined' && bodyWaterChart) {
         bodyWaterChart.data.labels = [];
         bodyWaterChart.data.datasets[0].data = [];
         bodyWaterChart.update();
     }
-    
-    if (manualBMRChart) {
+
+    if (typeof manualBMRChart !== 'undefined' && manualBMRChart) {
         manualBMRChart.data.labels = [];
         manualBMRChart.data.datasets[0].data = [];
         manualBMRChart.update();
     }
-    
-    if (manualAMRChart) {
+
+    if (typeof manualAMRChart !== 'undefined' && manualAMRChart) {
         manualAMRChart.data.labels = [];
         manualAMRChart.data.datasets[0].data = [];
         manualAMRChart.update();
     }
-    
+
     // Vyčisti tabulku
     const tableBody = document.getElementById('tableBody');
     if (tableBody) {
         tableBody.innerHTML = '';
     }
+
+    // Vyčisti statistiky - bezpečnější způsob
+    const elements = [
+        'currentWeight', 'currentBMI', 'weightChange', 'currentBodyWater', 
+        'lastManualBMR', 'lastManualAMR', 'theoreticalBMR', 'theoreticalAMR', 'goalProgress'
+    ];
     
-    // Vyčisti statistiky
-    document.getElementById('currentWeight').textContent = '-';
-    document.getElementById('currentBMI').textContent = '-';
-    document.getElementById('currentBMI').className = 'stat-value';
-    document.getElementById('weightChange').textContent = '-';
-    document.getElementById('weightChange').className = 'stat-value';
-    document.getElementById('currentBodyWater').textContent = '-';
-    document.getElementById('lastManualBMR').textContent = '-';
-    document.getElementById('lastManualAMR').textContent = '-';
-    document.getElementById('theoreticalBMR').textContent = '-';
-    document.getElementById('theoreticalAMR').textContent = '-';
-    document.getElementById('goalProgress').textContent = '-';
-    document.getElementById('goalProgressBarCard').style.display = 'none';
-    document.getElementById('latestEntryDate').textContent = 'Načítám data...';
-    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = '-';
+            element.className = 'stat-value';
+        }
+    });
+
+    const goalProgressBarCard = document.getElementById('goalProgressBarCard');
+    if (goalProgressBarCard) {
+        goalProgressBarCard.style.display = 'none';
+    }
+
+    const latestEntryDate = document.getElementById('latestEntryDate');
+    if (latestEntryDate) {
+        latestEntryDate.textContent = 'Načítám data...';
+    }
+
     console.log("🧹 clearUserDataFromUI: UI vyčištěno dokončeno.");
 };
 
@@ -1989,222 +1982,113 @@ window.setTodayDate = function() {
     document.getElementById('entryDate').value = today;
 };
 
-// ✅ OPRAVENÁ FUNKCE: loadData - s opravou pořadí aktualizace UI
+// ✅ HLAVNÍ OPRAVA: loadData - správné pořadí operací
 window.loadData = async function(forceReload = false) {
     // 🛡️ Ochrana proti duplicitnímu načítání
     if (isDataLoading && !forceReload) {
         console.log("⏳ loadData: Již probíhá načítání dat, přeskakuję.");
         return;
     }
-    
+
     // 🛡️ Ověř, že je uživatel přihlášen
     const user = firebase.auth().currentUser;
     if (!user) {
         console.warn("⚠️ loadData: Uživatel není přihlášen, nelze načíst data.");
         return;
     }
-    
-    // 🛡️ Zkontroluj změnu uživatele (POUZE při skutečné změně, ne při prvním načtení)
+
+    // 🛡️ Zkontroluj změnu uživatele A POUZE TEHDY vyčisti UI
     if (currentUserUID && currentUserUID !== user.uid) {
         console.log(`🔄 loadData: Detekována změna uživatele (${currentUserUID} → ${user.uid}), čistím UI.`);
         clearUserDataFromUI();
-    } else if (!currentUserUID) {
-        console.log(`🆕 loadData: První načtení pro uživatele: ${user.email} (UID: ${user.uid})`);
-    } else {
-        console.log(`🔄 loadData: Obnovuji data pro stejného uživatele: ${user.email} (UID: ${user.uid})`);
     }
-    
+
     currentUserUID = user.uid;
     isDataLoading = true;
-    
-    console.log(`📦 loadData: Začínám načítat data pro uživatele: ${user.email} (UID: ${user.uid})`);
-    
-   // const savedWeightLog = localStorage.getItem('weightLog_JirikTracker_v2_charts_separated_musclePercent');
-    //const savedSettings = localStorage.getItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent');
-    //const savedGoals = localStorage.getItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent');
 
-    let firestoreWeightDataLoaded = false;
-    let firestoreSettingsDataLoaded = false;
-    let firestoreGoalsDataLoaded = false;
+    console.log(`📦 loadData: Začínám načítat data pro uživatele: ${user.email} (UID: ${user.uid})`);
 
     try {
         console.log(`🔥 loadData: Načítám data z Firestore pro UID: ${user.uid}`);
+
+        // Načítání váhových dat z Firestore
         const firestoreWeightData = await window.loadWeightLogFromFirestore();
         if (firestoreWeightData && firestoreWeightData.length > 0) {
             weightLog = firestoreWeightData;
-            firestoreWeightDataLoaded = true;
             console.log(`✅ loadData: ${firestoreWeightData.length} váhových záznamů načteno z Firestore pro ${user.email}`);
         } else {
-            console.log(`💭 loadData: Žádná váhová data v Firestore pro ${user.email}`);
+            console.log(`💭 loadData: Žádná váhová data v Firestore pro ${user.email}, používám prázdný seznam.`);
+            weightLog = [];
         }
 
+        // Načítání nastavení z Firestore
         const firestoreSettings = await window.loadSettingsFromFirestore();
         if (firestoreSettings) {
             settings = { ...settings, ...firestoreSettings };
-            firestoreSettingsDataLoaded = true;
             console.log(`⚙️ loadData: Nastavení načtena z Firestore pro ${user.email}`);
         } else {
-            console.log(`💭 loadData: Žádná nastavení v Firestore pro ${user.email}`);
+            console.log(`💭 loadData: Žádná nastavení v Firestore pro ${user.email}, používám výchozí.`);
         }
 
+        // Načítání cílů z Firestore
         const firestoreGoals = await window.loadGoalsFromFirestore();
         if (firestoreGoals) {
             goals = { ...goals, ...firestoreGoals };
-            firestoreGoalsDataLoaded = true;
             console.log(`🎯 loadData: Cíle načteny z Firestore pro ${user.email}`);
         } else {
-            console.log(`💭 loadData: Žádné cíle v Firestore pro ${user.email}`);
+            console.log(`💭 loadData: Žádné cíle v Firestore pro ${user.email}, používám výchozí.`);
         }
 
     } catch (error) {
         console.error(`❌ loadData: Chyba při načítání z Firestore pro ${user.email}:`, error);
-        window.showNotification("Chyba: Data z cloudu nebylo možné načíst. Pokouším se načíst lokální data.", 5000);
+        window.showNotification("Chyba: Data z cloudu nebylo možné načíst.", 5000);
+
+        // V případě chyby nastavíme výchozí hodnoty
+        weightLog = [];
+        // settings a goals zůstanou s výchozími hodnotami
     }
 
-    // Fallback pro weightLog
-    if (!firestoreWeightDataLoaded) {
-        console.log("📁 loadData: Firestore weightLog nenačteno, pokouším se z LocalStorage.");
-        if (savedWeightLog) {
-            weightLog = JSON.parse(savedWeightLog);
-            console.log("📁 loadData: Data weightLog načtena z LocalStorage.");
-        } else {
-            console.log("🆕 loadData: Žádná data weightLog. Používám prázdný seznam.");
-            weightLog = [];
-        }
-    }
-
-    // Načítání settings a goals z LocalStorage, pokud nejsou z Firestore
-    if (!firestoreSettingsDataLoaded) {
-        console.log("📁 loadData: Firestore nastavení nenačteno, pokouším se z LocalStorage.");
-        if (savedSettings) {
-            settings = { ...settings, ...JSON.parse(savedSettings) };
-            console.log("📁 loadData: Nastavení načtena z LocalStorage.");
-        } else {
-            console.log("💭 loadData: Žádná nastavení v LocalStorage. Používám výchozí.");
-        }
-    } else {
-        console.log("✅ loadData: Nastavení již načtena z Firestore, přeskakuji LocalStorage.");
-    }
-    
-    if (!firestoreGoalsDataLoaded) {
-        console.log("📁 loadData: Firestore cíle nenačteny, pokouším se z LocalStorage.");
-        if (savedGoals) {
-            goals = { ...goals, ...JSON.parse(savedGoals) };
-            console.log("📁 loadData: Cíle načteny z LocalStorage.");
-        } else {
-            console.log("💭 loadData: Žádné cíle v LocalStorage. Používám výchozí.");
-        }
-    } else {
-        console.log("✅ loadData: Cíle již načteny z Firestore, přeskakuji LocalStorage.");
-    }
-
+    // Zajistíme správný formát activityLevel
     settings.activityLevel = parseFloat(settings.activityLevel) || 1.55;
-    console.log(`✅ loadData: Načítání dokončeno pro ${user.email}. Aktualizuji formuláře.`);
-    
-    // 🔧 KRITICKÁ OPRAVA: Aktualizuj UI až PO načtení všech dat!
-    window.updateForms();
 
-    // Prvotní uložení dat do Firebase, pokud byla načtena z LocalStorage nebo kódu
-    if (!firestoreWeightDataLoaded && (weightLog.length > 0 || savedWeightLog)) {
-        console.log("💾 loadData: Detekována chybějící data weightLog ve Firestore. Ukládám aktuální data do cloudu.");
-        await window.saveData();
-    } else if (!firestoreSettingsDataLoaded && savedSettings) {
-        console.log("💾 loadData: Detekována chybějící nastavení ve Firestore. Ukládám aktuální nastavení do cloudu.");
-        await window.saveData();
-    } else if (!firestoreGoalsDataLoaded && savedGoals) {
-        console.log("💾 loadData: Detekovány chybějící cíle ve Firestore. Ukládám aktuální cíle do cloudu.");
-        await window.saveData();
-    }
+    console.log(`✅ loadData: Načítání dokončeno pro ${user.email}. Aktualizuji formuláře a zobrazení.`);
     
-    // 🎯 DŮLEŽITÉ: Aktualizuj celé UI až na konci, když jsou všechna data načtena!
-    console.log("🎨 loadData: Aktualizuji kompletní UI s načtenými daty...");
-    window.updateDisplay();
-    
+    // 🔥 KLÍČOVÁ OPRAVA: Aktualizuj formuláře A ZOBRAZENÍ IHNED po načtení dat
+    window.updateForms();
+    window.updateDisplay(); // 🚀 Toto chybělo! Bez tohoto se data nezobrazí
+
     isDataLoading = false;
     console.log(`🎉 loadData: Kompletní načítání dokončeno pro ${user.email}!`);
-    
-    // 📊 DIAGNOSTIKA: Zkontroluj stav dat
-    console.log(`📊 DIAGNOSTIKA po loadData: weightLog.length = ${weightLog.length}, settings.height = ${settings.height}`);
-    if (weightLog.length > 0) {
-        console.log(`📊 První záznam: ${weightLog[0].date} - ${weightLog[0].weight}kg`);
-        console.log(`📊 Poslední záznam: ${weightLog[weightLog.length-1].date} - ${weightLog[weightLog.length-1].weight}kg`);
-    }
 };
 
-// 🔧 DOPLŇKOVÁ FUNKCE: Explicitní refresh UI (pro debugování)
-window.forceRefreshUI = function() {
-    console.log("🔄 forceRefreshUI: Vynucená aktualizace UI...");
-    console.log(`📊 Current data state: weightLog.length = ${weightLog.length}`);
-    
-    if (weightLog.length > 0) {
-        console.log("📊 Mám data, aktualizuji UI...");
-        window.updateDisplay();
-        window.showNotification(`UI obnoveno! Zobrazeno ${weightLog.length} záznamů.`, 2000);
-    } else {
-        console.log("📊 Žádná data k zobrazení!");
-        window.showNotification("Žádná data k zobrazení! Zkuste načíst data znovu.", 3000);
-    }
-};
-
-// 🛠️ DIAGNOSTICKÁ FUNKCE: Pro debugging stavu dat
-window.diagnoseDataState = function() {
-    console.log("🔍 === DIAGNOSTIKA STAVU DAT ===");
-    console.log("weightLog:", weightLog);
-    console.log("weightLog.length:", weightLog.length);
-    console.log("settings:", settings);
-    console.log("goals:", goals);
-    console.log("currentUserUID:", currentUserUID);
-    console.log("isDataLoading:", isDataLoading);
-    console.log("Firebase user:", firebase.auth().currentUser?.email || "NONE");
-    
-    // Zkontroluj grafy
-    console.log("Chart instances:");
-    console.log("weightChart:", weightChart?.data?.labels?.length || "UNDEFINED");
-    console.log("bmiChart:", bmiChart?.data?.labels?.length || "UNDEFINED");
-    
-    // Zkontroluj DOM elementy
-    const tableBody = document.getElementById('tableBody');
-    console.log("tableBody rows:", tableBody?.children?.length || "ELEMENT NOT FOUND");
-    
-    console.log("🔍 === KONEC DIAGNOSTIKY ===");
-};
-
-// ✅ OPRAVENÁ FUNKCE: saveData s ověřením uživatele
+// ✅ OPRAVENÁ FUNKCE: saveData - pouze do Firebase, bez localStorage
 window.saveData = async function() {
     const user = firebase.auth().currentUser;
     if (!user) {
         console.warn("⚠️ saveData: Uživatel není přihlášen, nelze uložit data do cloudu.");
-        // Aspoň ulož lokálně
-        localStorage.setItem('weightLog_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(weightLog));
-        localStorage.setItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(settings));
-        localStorage.setItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(goals));
+        window.showNotification("Chyba: Nejste přihlášeni! Data nelze uložit.", 4000);
         return;
     }
-    
+
     console.log(`💾 saveData: Ukládám data pro uživatele: ${user.email} (UID: ${user.uid})`);
-    
-    // Lokální uložení
-    localStorage.setItem('weightLog_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(weightLog));
-    localStorage.setItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(settings));
-    localStorage.setItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent', JSON.stringify(goals));
-    console.log("💾 saveData: Lokální uložení dokončeno.");
 
     try {
-        // Cloud uložení
+        // Ukládání pouze do Firebase/Firestore
         await window.saveWeightLogToFirestore(weightLog);
         console.log(`🔥 saveData: Váhová data uložena do Firestore pro ${user.email}`);
-        
+
         await window.saveSettingsToFirestore(settings);
         console.log(`⚙️ saveData: Nastavení uložena do Firestore pro ${user.email}`);
 
         await window.saveGoalsToFirestore(goals);
         console.log(`🎯 saveData: Cíle uloženy do Firestore pro ${user.email}`);
 
+        console.log(`✅ saveData: Ukládání do cloudu dokončeno pro ${user.email}.`);
+
     } catch (error) {
         console.error(`❌ saveData: Chyba při ukládání do Firestore pro ${user.email}:`, error);
         window.showNotification("Chyba: Data se nepodařilo uložit do cloudu!", 4000);
     }
-    console.log(`✅ saveData: Ukládání dokončeno pro ${user.email}.`);
 };
 
 window.updateForms = function() {
@@ -2273,7 +2157,7 @@ window.checkBMIAlert = function(bmi) {
         alertEl.innerHTML = `⚡ Upozornění: Vaše BMI (${bmi.toFixed(1)}) překračuje doporučenou hranici.`;
         alertEl.className = 'alert show';
         alertEl.style.background = '#ffaa00';
-        console.log("%ccheckBMIAlert: HLÍDAČ SYSTÉMU - BMI (" + bmi.toFixed(1) + ") překračuje doporučenou hranici.", "color: #ffaa00; font-weight: bold;");
+        console.log("%ccheckBMIAlert: HLÍDAČ SYSTÉMU - BMI (" + bmi.toFixed(1) + ") překračuje doporočenou hranici.", "color: #ffaa00; font-weight: bold;");
     } else if (bmi < settings.bmiWarningLower && bmi > 0) {
         alertEl.innerHTML = `⚡ Upozornění: Vaše BMI (${bmi.toFixed(1)}) je pod doporučenou hranicí.`;
         alertEl.className = 'alert show';
@@ -2327,7 +2211,7 @@ window.initializeCharts = function() {
             x: { grid: { color: gridColor }, ticks: { color: xLabelColor, autoSkip: true, maxTicksLimit: 10 } }
         }, plugins: { legend: { labels: { color: xLabelColor } } }
     });
-    
+
     const lineChartDataset = (label, data, borderColor, bgColor) => ({
         label: label, data: data, borderColor: borderColor, backgroundColor: bgColor,
         tension: 0.1, pointBackgroundColor: borderColor, pointBorderColor: '#fff',
@@ -2361,11 +2245,11 @@ window.updateCharts = function() {
     }
     const sortedData = [...weightLog].sort((a, b) => new Date(a.date) - new Date(b.date));
     const labels = sortedData.map(entry => window.formatDateForDisplay(entry.date));
-    
+
     const weights = sortedData.map(entry => entry.weight);
     const bmis = sortedData.map(entry => window.calculateBMI(entry.weight, settings.height).toFixed(1));
     const bodyFats = sortedData.map(entry => entry.bodyFat);
-    
+
     const muscleMassPercentages = sortedData.map(entry => {
         if (entry.muscleMass && entry.weight && entry.weight > 0) {
             return parseFloat(((entry.muscleMass / entry.weight) * 100).toFixed(1));
@@ -2398,11 +2282,11 @@ window.updateTable = function() {
 
     const sortedData = [...weightLog].sort((a, b) => new Date(b.date) - new Date(a.date));
     console.log(`updateTable: Zpracovávám ${sortedData.length} záznamů pro tabulku.`);
-    
+
     sortedData.forEach((entry, index) => {
         const bmi = window.calculateBMI(entry.weight, settings.height);
         const classification = window.classifyBMI(bmi);
-        
+
         let weightDiffText = '-';
         let diffClass = '';
         const chronologicalLog = [...weightLog].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -2419,7 +2303,7 @@ window.updateTable = function() {
         if (entry.muscleMass && entry.weight && entry.weight > 0) {
             muscleMassDisplay = ((entry.muscleMass / entry.weight) * 100).toFixed(1) + '%';
         }
-        
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${sortedData.length - index}</td>
@@ -2466,7 +2350,7 @@ window.updateStats = function() {
 
     const sortedLog = [...weightLog].sort((a, b) => new Date(a.date) - new Date(b.date));
     const latestEntry = sortedLog[sortedLog.length - 1];
-    
+
     const currentWeight = latestEntry.weight;
     const currentBMI = window.calculateBMI(currentWeight, settings.height);
     const currentBodyWater = latestEntry.bodyWater;
@@ -2494,7 +2378,7 @@ window.updateStats = function() {
     const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
     document.getElementById('theoreticalBMR').textContent = theoBMR > 0 ? Math.round(theoBMR) : '-';
     document.getElementById('theoreticalAMR').textContent = theoAMR > 0 ? Math.round(theoAMR) : '-';
-    
+
     document.getElementById('latestEntryDate').textContent = `Poslední záznam: ${window.formatDateForDisplay(latestEntry.date)}`;
 
     if (goals.targetWeight && sortedLog.length > 0) {
@@ -2521,7 +2405,7 @@ window.updateStats = function() {
         document.getElementById('goalProgress').textContent = `${progressPercent.toFixed(1)}%`;
         document.getElementById('goalProgressBarCard').style.display = 'block';
         document.getElementById('progressFill').style.width = `${progressPercent}%`;
-        
+
         const remainingKg = goals.targetWeight - currentWeight;
         if (progressPercent >= 100) {
             window.document.getElementById('goalStatus').textContent = `🎉 Cíl ${goals.targetWeight} kg dosažen/překonán!`;
@@ -2581,7 +2465,7 @@ window.updateRecommendations = function() {
     const latestEntry = sortedDataDesc[0];
     const currentWeight = latestEntry.weight;
     const currentBMI = window.calculateBMI(currentWeight, settings.height);
-    
+
     let recommendations = [];
 
     if (currentBMI > 0) {
@@ -2595,7 +2479,7 @@ window.updateRecommendations = function() {
 
     const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7));
     const fourteenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 14));
-    
+
     const last7DaysEntries = weightLog.filter(e => new Date(e.date) >= sevenDaysAgo);
     const prev7DaysEntries = weightLog.filter(e => new Date(e.date) >= fourteenDaysAgo && new Date(e.date) < sevenDaysAgo);
 
@@ -2621,12 +2505,12 @@ window.updateRecommendations = function() {
         console.log("updateRecommendations: Počítám doporučení pro cíle.");
         const daysToGoal = Math.ceil((new Date(goals.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
         const weightToChange = goals.targetWeight - currentWeight;
-        
+
         if (daysToGoal > 0 && weightToChange !== 0) {
             const requiredWeeklyChange = (weightToChange / (daysToGoal / 7)).toFixed(1);
             recommendations.push(`🎯 Pro dosažení cíle (${goals.targetWeight} kg) do ${window.formatDateForDisplay(goals.targetDate)}, je potřeba průměrná týdenní změna ${requiredWeeklyChange} kg.`);
             if (Math.abs(requiredWeeklyChange) > 1.5) {
-                recommendations.push("💡 Tento týdenní cíl je poměrně ambiciózní. Ujistěte se, že je udržitelný a zdravý.");
+                recommendations.push("💡 Tento týdenní cíl je poměrně ambiciózní. Ujistěte se, hogy je udržitelný a zdravý.");
             }
         } else if (weightToChange === 0) {
             recommendations.push(`🎯 Cílová váha ${goals.targetWeight} kg dosažena! Gratulujeme!`);
@@ -2641,7 +2525,7 @@ window.updateRecommendations = function() {
 
     const theoBMR = window.calculateBMR(currentWeight, settings.height, settings.age, settings.gender);
     const theoAMR = window.calculateAMR(theoBMR, settings.activityLevel);
-    
+
     if (theoAMR > 0 && goals.weeklyGoal) {
         const weeklyCalDeficitOrSurplus = goals.weeklyGoal * 7700;
         const dailyCalAdjustment = weeklyCalDeficitOrSurplus / 7;
@@ -2659,13 +2543,14 @@ window.updateRecommendations = function() {
     console.log("updateRecommendations: Doporučení aktualizována.");
 };
 
+// 🔥 VYLEPŠENÁ FUNKCE: updateDisplay s debug logem
 window.updateDisplay = function() {
-    console.log("updateDisplay: Spuštěna celková aktualizace zobrazení.");
+    console.log(`🎯 updateDisplay: Spuštěna s ${weightLog.length} záznamy`);
     window.updateTable();
     window.updateCharts();
     window.updateStats();
     window.updateRecommendations();
-    console.log("updateDisplay: Celkové zobrazení aktualizováno.");
+    console.log("✅ updateDisplay: Celkové zobrazení aktualizováno!");
 };
 
 // ✅ UPRAVENÉ UDÁLOSTI FORMULÁŘŮ - s ověřením přihlášení
@@ -3228,11 +3113,7 @@ if (typeof window.clearAllData === 'undefined') {
             if (confirm('⚠️ JSTE SI ABSOLUTNĚ JISTI? Všechna data budou nenávratně ztracena!')) {
                 console.log("clearAllData: Uživatel potvrdil 2. fázi mazání. Mažu data.");
                 
-                // Smaž z localStorage
-                localStorage.removeItem('weightLog_JirikTracker_v2_charts_separated_musclePercent');
-                localStorage.removeItem('weightSettings_JirikTracker_v2_charts_separated_musclePercent');
-                localStorage.removeItem('weightGoals_JirikTracker_v2_charts_separated_musclePercent');
-                console.log("clearAllData: Lokální data smazána z LocalStorage.");
+               
                 
                 // Smaž z Firestore
                 try {
@@ -3375,8 +3256,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
-
-
-
 
 
