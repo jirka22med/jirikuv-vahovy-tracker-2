@@ -77,6 +77,24 @@
                 return { category: 'DEBUG', isSpecial: false };
             }
             
+            // Nové detekce pro úspěch a selhání
+            if (msgStr.includes('úspěch') || msgStr.includes('success') || msgStr.includes('úspěšně uloženo')) {
+                return { category: 'SUCCESS', isSpecial: true };
+            }
+            if (msgStr.includes('selhání') || msgStr.includes('failure') || msgStr.includes('selhání při načítání')) {
+                return { category: 'FAILURE', isSpecial: true };
+            }
+            
+            // Nové detekce pro načítání
+            if (msgStr.includes('načítání') || msgStr.includes('loading')) {
+                return { category: 'LOADING', isSpecial: false };
+            }
+            
+            // Nové detekce pro úlohy a průběh
+            if (msgStr.includes('úloha') || msgStr.includes('průběh') || msgStr.includes('task progress')) {
+                return { category: 'TASK_PROGRESS', isSpecial: false };
+            }
+            
             return { category: type.toUpperCase(), isSpecial: false };
         }
 
@@ -360,7 +378,7 @@
                 background-color: #333 !important;
             }
 
-            /* Barevné kategorie logů */
+            /* Barevné kategorie logů - přidány nové kategorie */
             .log-type-log-text { color: #87ceeb !important; }
             .log-type-warn-text { color: #ffcc00 !important; }
             .log-type-error-text { color: #ff6347 !important; }
@@ -375,6 +393,10 @@
             .log-type-group-text { color: #9370db !important; }
             .log-type-time-text { color: #32cd32 !important; }
             .log-type-assert-text { color: #dc143c !important; font-weight: bold !important; }
+            .log-type-success-text { color: #98fb98 !important; font-weight: bold !important; }
+            .log-type-failure-text { color: #ff6347 !important; font-weight: bold !important; }
+            .log-type-loading-text { color: #4682b4 !important; }
+            .log-type-task_progress-text { color: #20b2aa !important; }
 
             .jirik-copy-log-btn {
                 background: #555 !important;
@@ -531,36 +553,33 @@
                     originalConsole.log('✅ Log vyčištěn!');
                 }
             });
-// Přidej tuhle část do setupModal() funkce, za ostatní event listenery:
 
-// Filtr funkcionalita
-let currentFilter = 'all'; // 'all', 'special', 'errors', 'init'
-
-filterBtn?.addEventListener('click', () => {
-    // Cycle through filter options
-    const filters = ['all', 'special', 'errors', 'init'];
-    const currentIndex = filters.indexOf(currentFilter);
-    const nextIndex = (currentIndex + 1) % filters.length;
-    currentFilter = filters[nextIndex];
-    
-    // Update button text to show current filter
-    const filterLabels = {
-        'all': '🔍 Vše',
-        'special': '⭐ Speciální',
-        'errors': '❌ Chyby',
-        'init': '🚀 Init'
-    };
-    
-    filterBtn.textContent = filterLabels[currentFilter];
-    
-    // Apply filter
-    updateLogDisplay();
-    
-    originalConsole.log(`🔍 Filtr změněn na: ${currentFilter}`);
-});
-
-// Modify updateLogDisplay function to respect filter:
-window.updateLogDisplay = function() {
+            // Filtr funkcionalita
+            let currentFilter = 'all'; // 'all', 'special', 'errors', 'init', 'success', 'failure', 'loading', 'task_progress'
+            filterBtn?.addEventListener('click', () => {
+                const filters = ['all', 'special', 'errors', 'init', 'success', 'failure', 'loading', 'task_progress'];
+                const currentIndex = filters.indexOf(currentFilter);
+                const nextIndex = (currentIndex + 1) % filters.length;
+                currentFilter = filters[nextIndex];
+                
+                const filterLabels = {
+                    'all': '🔍 Vše',
+                    'special': '⭐ Speciální',
+                    'errors': '❌ Chyby',
+                    'init': '🚀 Init',
+                    'success': '✅ Úspěch',
+                    'failure': '❌ Selhání',
+                    'loading': '⏳ Načítání',
+                    'task_progress': '📈 Průběh'
+                };
+                
+                filterBtn.textContent = filterLabels[currentFilter];
+                
+                updateLogDisplay();
+                
+                originalConsole.log(`🔍 Filtr změněn na: ${currentFilter}`);
+            });
+           window.updateLogDisplay = function() {
     if (!tableBody) return;
     
     tableBody.innerHTML = '';
@@ -574,6 +593,14 @@ window.updateLogDisplay = function() {
                 return entry.type === 'ERROR' || entry.type === 'WARN';
             case 'init':
                 return entry.type === 'INIT_VAR';
+            case 'success':
+                return entry.type === 'SUCCESS';
+            case 'failure':
+                return entry.type === 'FAILURE';
+            case 'loading':
+                return entry.type === 'LOADING';
+            case 'task_progress':
+                return entry.type === 'TASK_PROGRESS';
             case 'all':
             default:
                 return true;
@@ -630,7 +657,8 @@ window.updateLogDisplay = function() {
         container.scrollTop = container.scrollHeight;
     }
 };
-            exportBtn?.addEventListener('click', () => {
+//
+ exportBtn?.addEventListener('click', () => {
                 const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
                 const filename = `console-log-${timestamp}.html`;
 
@@ -765,8 +793,9 @@ window.updateLogDisplay = function() {
         }
 
         // Úvodní log
-        originalConsole.log('🔥 Enhanced Console Logger úspěšně inicializován!');
-        originalConsole.log('📋 Dostupné funkce: console.log, warn, error, info, debug, trace, table, group, time, assert, clear, count, dir');
+originalConsole.log('🔥 Enhanced Console Logger úspěšně inicializován!');
+originalConsole.log('📋 Dostupné funkce: console.log, warn, error, info, debug, trace, table, group, time, assert, clear, count, dir');
+originalConsole.log('🌟 Nové detekce: přidány kategorie SUCCESS, FAILURE, LOADING a TASK_PROGRESS pro slova jako úspěch, selhání, načítání a úloha.');
     };
 
     // Spustit inicializaci
