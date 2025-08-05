@@ -1615,33 +1615,34 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
         <div id="latestEntryDate" style="text-align: center; margin-top: 5px; font-size: 0.9em; color: #aaa;"></div>
       </div>
 
-      <div class="charts-container">
-        <div class="chart-card">
-          <h3>Vývoj váhy</h3>
-          <canvas id="weightChart"></canvas>
+      <div class="charts-container" style="background: transparent;">
+        <div class="chart-card" style="background: #B22222;">
+          <h3>Vývoj váhy</h3> 
+          <canvas id="weightChart" style="background: #B22222;"></canvas>
         </div>
-        <div class="chart-card">
+        <div class="chart-card" style="background: #A0522D;">
           <h3>Vývoj BMI</h3>
-          <canvas id="bmiChart"></canvas>
+          <canvas id="bmiChart" style="background: #A0522D;" ></canvas>
         </div>
-        <div class="chart-card">
+        <div class="chart-card" style="background: #4B0082;">
           <h3>Vývoj tělesného tuku (%)</h3>
-          <canvas id="bodyFatOnlyChart"></canvas>
+          <canvas id="bodyFatOnlyChart" style="background: #4B0082;"></canvas>
         </div>
-        <div class="chart-card">
-          <h3>Vývoj svalové hmoty (%)</h3> <canvas id="muscleMassOnlyChart"></canvas>
+        <div class="chart-card" style="background: #006400;">
+          <h3>Vývoj svalové hmoty (%)</h3> 
+            <canvas id="muscleMassOnlyChart" style="background: #006400;"></canvas>
         </div>
-         <div class="chart-card">
+         <div class="chart-card" style="background: #00008B;">
           <h3>Vývoj vody v těle</h3>
-          <canvas id="bodyWaterChart"></canvas>
+          <canvas id="bodyWaterChart" style="background: #00008B;"></canvas>
         </div>
-        <div class="chart-card">
+        <div class="chart-card" style="background: #993300;"> 
           <h3>Vývoj zadaného BMR (kcal)</h3>
-          <canvas id="manualBMRChart"></canvas>
+          <canvas id="manualBMRChart" style="background: #993300;"></canvas>
         </div>
-        <div class="chart-card">
+        <div class="chart-card" style="background: #8B0000;">
           <h3>Vývoj zadaného AMR (kcal)</h3>
-          <canvas id="manualAMRChart"></canvas>
+          <canvas id="manualAMRChart" style="background: #8B0000;"></canvas>
         </div>
       </div>
 
@@ -3250,4 +3251,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 </body>
 </html>
+
 
