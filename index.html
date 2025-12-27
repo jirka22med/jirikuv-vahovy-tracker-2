@@ -22,6 +22,7 @@
 
 <!-- Manifest (PWA) -->
 <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f1a">
   <style>
 body {
   background: #0d1117;
@@ -1832,7 +1833,7 @@ table td button { /* Tato pravidla přepíší ty výše definované pro 768px a
         </div>
       </div>
     </div>
-  </div>
+   
 
    
     <script>
@@ -3248,6 +3249,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log("🎉 DOMContentLoaded: Inicializace UI dokončena. Čekám na přihlášení uživatele.");
 });
       console.log('⚠️ Enhanced Console Logger úspěšně inicializován! 📋 Dostupné funkce: console.log, warn, error, info, debug, trace, table, group, time, assert, clear, count, dir. 🌟 Nové detekce: přidány kategorie SUCCESS, FAILURE, LOADING a TASK_PROGRESS pro slova jako úspěch, selhání, načítání a úloha.');  
+        
+      if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('Service Worker zaregistrován:', reg))
+    .catch(err => console.error('Chyba Service Workeru:', err));
+}  
+        
 </script>
 </body>
 </html>
